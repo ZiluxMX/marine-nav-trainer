@@ -1,65 +1,73 @@
-﻿using System.Windows;
+﻿using PdfiumViewer;
+using System.Diagnostics;
+using System.Drawing;
+using Drawing = System.Drawing.Imaging;
+using System.IO;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using PdfiumViewer;
-using System.Drawing;
-using System.IO;
-using System.Diagnostics;
-using System.Drawing.Imaging;
 using Rectangle = System.Drawing.Rectangle;
+using Color = System.Drawing.Color;
+using Point = System.Windows.Point;
+using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer {
     public partial class MainWindow : Window {
         private const double ZoomStep = 1.1;
         private const double MinZoom = 0.08;
         private const double MaxZoom = 2.0;
-        private int CurrentDPI;
+        private const double BitmapScalingStep = 0.35;
 
-        private System.Windows.Point _panStart;
+        private Point _panStart;
         private bool _isPanning;
         private double _hOffsetStart;
         private double _vOffsetStart;
         private bool _edgesVisible = true;
-        // Kart-312-3-2021.pdf
+        private Line? _activeEdge;
+
+        // --sekcja TEMP
+        private const string MapFile = "Kart-312-3-2021.pdf";
         private const double LatTop = 71.333333;
         private const double LatBottom = 69.000000;
         private const double LonLeft = 12.000000;
         private const double LonRight = 21.000000;
-
-        private static double DegToRad(double d) => d * Math.PI / 180.0;
-        private static double RadToDeg(double r) => r * 180.0 / Math.PI;
-
-        private Line? _activeEdge;
-
+        // -- koniec sekcji TEMP
+               
         public MainWindow() {
             InitializeComponent();
             LoadPdfMap();
+            Dispatcher.InvokeAsync(() => {
+                ResizeMapToMainWindow();
+            }, Threading.DispatcherPriority.Loaded);
         }
+
 
         private void LoadPdfMap() {
             string pdfPath = System.IO.Path.Combine(
                 Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
                 "Assets",
-                "Kart-312-3-2021.pdf"
+                MapFile
             );
+
             using var document = PdfDocument.Load(pdfPath);
             int pageIndex = 0;
-            CurrentDPI = 300; //400
+            int dpi = 300; //400
             var size = document.PageSizes[pageIndex];
-            int width = (int)(size.Width / 72.0 * CurrentDPI);
-            int height = (int)(size.Height / 72.0 * CurrentDPI);
-            using var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            int width = (int)(size.Width / 72.0 * dpi);
+            int height = (int)(size.Height / 72.0 * dpi);
+            using var bitmap = new Bitmap(width, height, Drawing.PixelFormat.Format32bppRgb);
 
             using (var g = Graphics.FromImage(bitmap)) {
                 g.Clear(Color.White);
                 document.Render(
                     pageIndex,
                     g,
-                    CurrentDPI,
-                    CurrentDPI,
+                    dpi,
+                    dpi,
                     new Rectangle(0, 0, width, height),
-                    false );
+                    false);
             }
             var wb = ConvertToWriteableBitmap(bitmap);
             MapImage.Source = wb;
@@ -67,7 +75,9 @@ namespace marine_nav_trainer {
             MapCanvas.Height = wb.PixelHeight;
             MapImage.Width = wb.PixelWidth;
             MapImage.Height = wb.PixelHeight;
-  
+
+            Debug.WriteLine($"Height={height}  Width={width}");
+
             InitCalibrationEdges();
         }
 
@@ -75,14 +85,14 @@ namespace marine_nav_trainer {
             var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var bmpData = bitmap.LockBits(
                 rect,
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format24bppRgb);
+                Drawing.ImageLockMode.ReadOnly,
+                Drawing.PixelFormat.Format32bppRgb);
             try {
                 var wb = new WriteableBitmap(
                     bitmap.Width,
                     bitmap.Height,
                     96, 96,
-                    System.Windows.Media.PixelFormats.Bgr24,
+                    PixelFormats.Bgr32,
                     null);
                 wb.WritePixels(
                     new Int32Rect(0, 0, bitmap.Width, bitmap.Height),
@@ -94,7 +104,6 @@ namespace marine_nav_trainer {
                 bitmap.UnlockBits(bmpData);
             }
         }
-
 
         private void InitCalibrationEdges() {
             double w = MapCanvas.Width;
@@ -117,6 +126,35 @@ namespace marine_nav_trainer {
             BottomEdge.X2 = w;
         }
 
+        private void ResizeMapToMainWindow() {
+            double windowWidth = MapScrollViewer.ViewportWidth;
+            double windowHeight = MapScrollViewer.ViewportHeight;
+            Debug.WriteLine($"WIN_Height={windowHeight}  WIN_Width={windowWidth}");
+            FitToWindow(windowHeight, windowWidth);
+        }
+
+        private void FitToWindow(double maxHeight, double maxWidth) {
+            if (maxHeight == 0 || maxWidth == 0)
+                return;
+            double scaleY = maxHeight / MapImage.Height;
+            double scaleX = maxWidth / MapImage.Width;
+            double scale = Math.Min(scaleX, scaleY);
+            scale = Math.Max(scale, MinZoom);
+            if (scale <= BitmapScalingStep)
+                RenderOptions.SetBitmapScalingMode(MapImage, BitmapScalingMode.Fant);
+            else
+                RenderOptions.SetBitmapScalingMode(MapImage, BitmapScalingMode.LowQuality);
+
+            MapScale.ScaleX = scale;
+            MapScale.ScaleY = scale;
+
+            MapCanvas.Width = MapImage.Width * scale;
+            MapCanvas.Height = MapImage.Height * scale;
+
+            MapScrollViewer.ScrollToHorizontalOffset(0);
+            MapScrollViewer.ScrollToVerticalOffset(0);
+        }
+
         private void MapScrollViewer_MouseWheel_Zoom(object sender, MouseWheelEventArgs mouse) {
             if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl))
                 return;
@@ -130,7 +168,12 @@ namespace marine_nav_trainer {
             var mousePos = mouse.GetPosition(MapScrollViewer);
             double absX = (MapScrollViewer.HorizontalOffset + mousePos.X) / oldScale;
             double absY = (MapScrollViewer.VerticalOffset + mousePos.Y) / oldScale;
-
+            
+            if (newScale <= BitmapScalingStep)
+                RenderOptions.SetBitmapScalingMode(MapImage, BitmapScalingMode.Fant);
+            else 
+                RenderOptions.SetBitmapScalingMode(MapImage, BitmapScalingMode.LowQuality);
+            
             MapScale.ScaleX = newScale;
             MapScale.ScaleY = newScale;
             MapCanvas.Width = MapImage.Width * newScale;
@@ -138,14 +181,14 @@ namespace marine_nav_trainer {
             MapScrollViewer.ScrollToHorizontalOffset(absX * newScale - mousePos.X);
             MapScrollViewer.ScrollToVerticalOffset(absY * newScale - mousePos.Y);
 
-            //Debug.WriteLine($"Zoom={zoom}  Scala={newScale}");
+            Debug.WriteLine($"Zoom={zoom}  Scala={newScale}");
 
             mouse.Handled = true;
         }
 
         private void MapCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs mouse) {
             if (Keyboard.IsKeyDown(Key.LeftAlt) && _edgesVisible) {
-                System.Windows.Point pos = mouse.GetPosition(MapCanvas);
+                Point pos = mouse.GetPosition(MapCanvas);
                 _activeEdge = GetEdgeNearPoint(pos);
                 if (_activeEdge != null)
                     MapCanvas.CaptureMouse();
@@ -163,7 +206,7 @@ namespace marine_nav_trainer {
 
         private void MapCanvas_MouseMove(object sender, MouseEventArgs mouse) {
             if (_activeEdge != null && _edgesVisible) {
-                System.Windows.Point pos = mouse.GetPosition(MapCanvas);
+                Point pos = mouse.GetPosition(MapCanvas);
 
                 if (_activeEdge == LeftEdge || _activeEdge == RightEdge)
                     _activeEdge.X1 = _activeEdge.X2 = Clamp(pos.X, 0, MapCanvas.Width);
@@ -174,7 +217,7 @@ namespace marine_nav_trainer {
             if (!_isPanning)
                 return;
 
-            System.Windows.Point cur = mouse.GetPosition(MapScrollViewer);
+            Point cur = mouse.GetPosition(MapScrollViewer);
             Vector d = cur - _panStart;
             MapScrollViewer.ScrollToHorizontalOffset(_hOffsetStart - d.X);
             MapScrollViewer.ScrollToVerticalOffset(_vOffsetStart - d.Y);
@@ -187,7 +230,7 @@ namespace marine_nav_trainer {
         }
 
         private void MapCanvas_MouseRightButtonDown(object sender, MouseButtonEventArgs mouse) {
-            System.Windows.Point pos = mouse.GetPosition(MapCanvas);
+            Point pos = mouse.GetPosition(MapCanvas);
             var geo = PixelToGeoCalibrated(pos.X, pos.Y);
 
             //Debug.WriteLine($"LAT={geo.lat:F5}  LON={geo.lon:F5}");
@@ -234,7 +277,7 @@ namespace marine_nav_trainer {
         }
 
 
-        private Line? GetEdgeNearPoint(System.Windows.Point pos) {
+        private Line? GetEdgeNearPoint(Point pos) {
             const double tol = 8;
             if (Math.Abs(pos.X - LeftEdge.X1) < tol) return LeftEdge;
             if (Math.Abs(pos.X - RightEdge.X1) < tol) return RightEdge;
@@ -243,9 +286,6 @@ namespace marine_nav_trainer {
 
             return null;
         }
-
-        private static double Clamp(double v, double min, double max)
-            => Math.Max(min, Math.Min(max, v));
 
         //Panel sterowania
 
@@ -269,6 +309,14 @@ namespace marine_nav_trainer {
         private void ResizeMap_Click(object sender, RoutedEventArgs e) {
             ToggleCalibrationLines();
         }
+
+        // Static
+        private static double Clamp(double v, double min, double max)
+            => Math.Max(min, Math.Min(max, v));
+        private static double DegToRad(double d) 
+            => d * Math.PI / 180.0;
+        private static double RadToDeg(double r) 
+            => r * 180.0 / Math.PI;
     }
 }
 //

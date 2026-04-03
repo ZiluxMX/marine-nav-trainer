@@ -14,6 +14,7 @@ namespace marine_nav_trainer {
         private const double ZoomStep = 1.1;
         private const double MinZoom = 0.08;
         private const double MaxZoom = 2.0;
+        private int CurrentDPI;
 
         private System.Windows.Point _panStart;
         private bool _isPanning;
@@ -29,7 +30,7 @@ namespace marine_nav_trainer {
         private static double DegToRad(double d) => d * Math.PI / 180.0;
         private static double RadToDeg(double r) => r * 180.0 / Math.PI;
 
-        private Line _activeEdge;
+        private Line? _activeEdge;
 
         public MainWindow() {
             InitializeComponent();
@@ -44,19 +45,19 @@ namespace marine_nav_trainer {
             );
             using var document = PdfDocument.Load(pdfPath);
             int pageIndex = 0;
-            int dpi = 300; //400
+            CurrentDPI = 300; //400
             var size = document.PageSizes[pageIndex];
-            int width = (int)(size.Width / 72.0 * dpi);
-            int height = (int)(size.Height / 72.0 * dpi);
-            using var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            int width = (int)(size.Width / 72.0 * CurrentDPI);
+            int height = (int)(size.Height / 72.0 * CurrentDPI);
+            using var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
 
             using (var g = Graphics.FromImage(bitmap)) {
                 g.Clear(Color.White);
                 document.Render(
                     pageIndex,
                     g,
-                    dpi,
-                    dpi,
+                    CurrentDPI,
+                    CurrentDPI,
                     new Rectangle(0, 0, width, height),
                     false );
             }
@@ -66,7 +67,7 @@ namespace marine_nav_trainer {
             MapCanvas.Height = wb.PixelHeight;
             MapImage.Width = wb.PixelWidth;
             MapImage.Height = wb.PixelHeight;
-
+  
             InitCalibrationEdges();
         }
 
@@ -75,13 +76,13 @@ namespace marine_nav_trainer {
             var bmpData = bitmap.LockBits(
                 rect,
                 ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppArgb);
+                PixelFormat.Format24bppRgb);
             try {
                 var wb = new WriteableBitmap(
                     bitmap.Width,
                     bitmap.Height,
                     96, 96,
-                    System.Windows.Media.PixelFormats.Bgra32,
+                    System.Windows.Media.PixelFormats.Bgr24,
                     null);
                 wb.WritePixels(
                     new Int32Rect(0, 0, bitmap.Width, bitmap.Height),
@@ -121,18 +122,24 @@ namespace marine_nav_trainer {
                 return;
 
             double zoom = mouse.Delta > 0 ? ZoomStep : 1 / ZoomStep;
-            double newScale = MapScale.ScaleX * zoom;
+            double oldScale = MapScale.ScaleX;
+            double newScale = oldScale * zoom;
             if (newScale < MinZoom || newScale > MaxZoom)
                 return;
 
-            var mousePos = mouse.GetPosition(MapCanvas);
-            double absX = mousePos.X * MapScale.ScaleX + MapScrollViewer.HorizontalOffset;
-            double absY = mousePos.Y * MapScale.ScaleY + MapScrollViewer.VerticalOffset;
+            var mousePos = mouse.GetPosition(MapScrollViewer);
+            double absX = (MapScrollViewer.HorizontalOffset + mousePos.X) / oldScale;
+            double absY = (MapScrollViewer.VerticalOffset + mousePos.Y) / oldScale;
 
             MapScale.ScaleX = newScale;
             MapScale.ScaleY = newScale;
-            MapScrollViewer.ScrollToHorizontalOffset(absX * zoom - mousePos.X);
-            MapScrollViewer.ScrollToVerticalOffset(absY * zoom - mousePos.Y);
+            MapCanvas.Width = MapImage.Width * newScale;
+            MapCanvas.Height = MapImage.Height * newScale;
+            MapScrollViewer.ScrollToHorizontalOffset(absX * newScale - mousePos.X);
+            MapScrollViewer.ScrollToVerticalOffset(absY * newScale - mousePos.Y);
+
+            //Debug.WriteLine($"Zoom={zoom}  Scala={newScale}");
+
             mouse.Handled = true;
         }
 
@@ -227,7 +234,7 @@ namespace marine_nav_trainer {
         }
 
 
-        private Line GetEdgeNearPoint(System.Windows.Point pos) {
+        private Line? GetEdgeNearPoint(System.Windows.Point pos) {
             const double tol = 8;
             if (Math.Abs(pos.X - LeftEdge.X1) < tol) return LeftEdge;
             if (Math.Abs(pos.X - RightEdge.X1) < tol) return RightEdge;
@@ -259,5 +266,9 @@ namespace marine_nav_trainer {
             MapScale.ScaleX = 1.0;
             MapScale.ScaleY = 1.0;
         }
+        private void ResizeMap_Click(object sender, RoutedEventArgs e) {
+            ToggleCalibrationLines();
+        }
     }
 }
+//

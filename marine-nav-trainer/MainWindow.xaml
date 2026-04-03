@@ -39,8 +39,14 @@
 
                     <Button Content="Reset Zoom"
                             Click="ResetZoom_Click"
-                            Padding="10,4"/>
-                    
+                            Padding="10,4"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Resize map"
+                            Click="ResizeMap_Click"
+                            Padding="10,4"
+                            Margin="0,0,10,0"/>
+
                 </StackPanel>
                 <StackPanel Orientation="Horizontal"
                             DockPanel.Dock="Right"

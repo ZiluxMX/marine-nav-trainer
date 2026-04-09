@@ -4,109 +4,52 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:marine_nav_trainer"
+        xmlns:map="clr-namespace:marine_nav_trainer.Map"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
         mc:Ignorable="d"
-        Title="MainWindow"
+        Title="Marine Nav Trainer"
         Width="1280"
         Height="720"
         SizeToContent="Manual">
 
-    <Grid>
+    <Grid ClipToBounds="True">
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0"
-                Background="#1E2A38"
-                Padding="10">
-            
-            <DockPanel LastChildFill="False">
-                <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Left"
-                            VerticalAlignment="Center"
-                            Margin="0,0,20,0">
-
-                    <TextBlock Text="PanelSterowania"
-                               Foreground="White"
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Margin="0,0,15,0"/>
-
-                    <Button Content="Linie pomocnicze"
-                            Click="ToggleEdges_Click"
-                            Padding="10,4"
-                            Margin="0,0,10,0"/>
-
-                    <Button Content="Reset Zoom"
-                            Click="ResetZoom_Click"
-                            Padding="10,4"
-                            Margin="0,0,10,0"/>
-
-                    <Button Content="Resize map"
-                            Click="ResizeMap_Click"
-                            Padding="10,4"
-                            Margin="0,0,10,0"/>
-
-                </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Right"
-                            VerticalAlignment="Center">
-                    
-                    <TextBlock x:Name="CoordsText"
-                               Foreground="White"
-                               FontFamily="Consolas"
-                               FontSize="14"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-        
-        <ScrollViewer x:Name="MapScrollViewer"
-                      Grid.Row="1"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto"
-                      PreviewMouseWheel="MapScrollViewer_MouseWheel_Zoom"
-                      Background="#1E1E1E"
-                      CanContentScroll="False">
-            
-            <Grid HorizontalAlignment="Center"
-                  VerticalAlignment="Center">
+        <Border Grid.Row="0">
+            <ui:NavigationView Grid.Row="0"
+                               PaneDisplayMode="Top"
+                               IsBackButtonVisible="Collapsed">       
                 
-                <Canvas x:Name="MapCanvas"
-                        MouseRightButtonDown="MapCanvas_MouseRightButtonDown"
-                        MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
-                        MouseLeftButtonUp="MapCanvas_MouseLeftButtonUp"
-                        MouseMove="MapCanvas_MouseMove">
-                    
-                    <Canvas.RenderTransform>
-                        <ScaleTransform x:Name="MapScale"
-                                        ScaleX="1"
-                                        ScaleY="1"/>
-                    </Canvas.RenderTransform>
+                <ui:NavigationView.MenuItems>
+                    <ui:NavigationViewItem Content="System" Padding="10" Margin="12,0,0,0">
+                        <ui:NavigationViewItem.MenuItems>
+                            <ui:NavigationViewItem Content="Dane instalacyjne" MinWidth="155"/>
+                            <ui:NavigationViewItemSeparator />
+                            <ui:NavigationViewItem Content="Zamknij program" />
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
 
-                    <Image x:Name="MapImage"
-                           RenderOptions.BitmapScalingMode="LowQuality"/>
+                    <ui:NavigationViewItem Content="Zadania nawigacyjne">
+                        <ui:NavigationViewItem.MenuItems >
+                            <ui:NavigationViewItem Content="Utwórz nowe zadanie" MinWidth="180"/>
+                            <ui:NavigationViewItem Content="Lista zadań" />
+                            <ui:NavigationViewItem Content="Rozwiąż zadanie" />
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
 
-                    <Line x:Name="LeftEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
-                    
-                    <Line x:Name="RightEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
-                    
-                    <Line x:Name="TopEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
-                    
-                    <Line x:Name="BottomEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
-                </Canvas>
-            </Grid>
-        </ScrollViewer>
+                    <ui:NavigationViewItem Content="Pomoc">
+                        <ui:NavigationViewItem.MenuItems>
+                            <ui:NavigationViewItem Content="O programie" />
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
+                </ui:NavigationView.MenuItems>
+            </ui:NavigationView>
+        </Border>
+        <Grid Grid.Row="1">
+            <map:MapView/>
+        </Grid>
     </Grid>
 </Window>

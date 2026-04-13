@@ -12,6 +12,7 @@ using Drawing = System.Drawing.Imaging;
 using Rectangle = System.Drawing.Rectangle;
 using Color = System.Drawing.Color;
 using Point = System.Windows.Point;
+using Brushes = System.Windows.Media.Brushes;
 using Threading = System.Windows.Threading;
 
 using Wpf.Ui.Appearance;
@@ -25,12 +26,13 @@ namespace marine_nav_trainer.Map {
         private const double BitmapScalingStep = 0.35;
 
         private Point _panStart;
-        private bool _isPanning;
+        private Line? _activeEdge;
         private double _hOffsetStart;
         private double _vOffsetStart;
+        private bool _isPanning;
         private bool _edgesVisible = true;
         private bool _isLightMode = true;
-        private Line? _activeEdge;
+        private bool _isMarkMode = false;
 
         // --sekcja TEMP
         private const string MapFile = "Kart-312-3-2021.pdf";
@@ -190,6 +192,14 @@ namespace marine_nav_trainer.Map {
         }
 
         private void MapCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs mouse) {
+            if (Keyboard.IsKeyDown(Key.LeftCtrl)) {
+                _isPanning = true;
+                _panStart = mouse.GetPosition(MapScrollViewer);
+                _hOffsetStart = MapScrollViewer.HorizontalOffset;
+                _vOffsetStart = MapScrollViewer.VerticalOffset;
+                MapCanvas.CaptureMouse();
+                return;
+            }
             if (Keyboard.IsKeyDown(Key.LeftAlt) && _edgesVisible) {
                 Point pos = mouse.GetPosition(MapCanvas);
                 _activeEdge = GetEdgeNearPoint(pos);
@@ -197,14 +207,10 @@ namespace marine_nav_trainer.Map {
                     MapCanvas.CaptureMouse();
                 return;
             }
-            if (!Keyboard.IsKeyDown(Key.LeftCtrl))
+            if (_isMarkMode) {
+                SetPositionMark(mouse);
                 return;
-
-            _isPanning = true;
-            _panStart = mouse.GetPosition(MapScrollViewer);
-            _hOffsetStart = MapScrollViewer.HorizontalOffset;
-            _vOffsetStart = MapScrollViewer.VerticalOffset;
-            MapCanvas.CaptureMouse();
+            }         
         }
 
         private void MapCanvas_MouseMove(object sender, MouseEventArgs mouse) {
@@ -290,11 +296,19 @@ namespace marine_nav_trainer.Map {
             return null;
         }
 
-        // Panel sterowania
-        private void ToggleEdges_Click(object sender, RoutedEventArgs e) {
-            ToggleCalibrationLines();
+        private void SetPositionMark(MouseButtonEventArgs mouse) {
+            Point position = mouse.GetPosition(MapCanvas);
+            double size = 30;
+
+            Canvas mark = CreatePositionMark(size);
+            Canvas.SetLeft(mark, position.X - size / 2);
+            Canvas.SetTop(mark, position.Y - size / 2);
+
+            MapCanvas.Children.Add(mark);
+            _isMarkMode = false;
         }
 
+        // Panel sterowania
         private void ToggleCalibrationLines() {
             _edgesVisible = !_edgesVisible;
             var isVisible = _edgesVisible ? Visibility.Visible : Visibility.Collapsed;
@@ -306,7 +320,6 @@ namespace marine_nav_trainer.Map {
         }
 
         private void ToggleThermeStyle() {
-
             if (_isLightMode) {
                 ApplicationThemeManager.Apply(
                     ApplicationTheme.Dark,
@@ -320,11 +333,19 @@ namespace marine_nav_trainer.Map {
             }
             _isLightMode = !_isLightMode;
         }
-        private void ResizeMap_Click(object sender, RoutedEventArgs e) {
+                
+
+        private void ToggleEdgesOnClick(object sender, RoutedEventArgs e) {
+            ToggleCalibrationLines();
+        }
+        private void ResizeMapOnClick(object sender, RoutedEventArgs e) {
             ResizeMapToMainWindow();
         }
-        private void ToggleTherme_Click(object sender, RoutedEventArgs e) {
+        private void ToggleThermeOnClick(object sender, RoutedEventArgs e) {
             ToggleThermeStyle();
+        }
+        private void SetMarkOnClick(object sender, RoutedEventArgs e) {
+            _isMarkMode = true;
         }
 
         // Static
@@ -335,8 +356,76 @@ namespace marine_nav_trainer.Map {
         private static double RadToDeg(double r)
             => r * 180.0 / Math.PI;
 
-        private void Button_Click(object sender, RoutedEventArgs e) {
+        // inne
+        private Canvas CreatePositionMark(double size) {
+            double center = size / 2;
+            double ringRadius = size / 2;
+            double ringThickness = 5;
+            double lineThickness = 6;
+            double lineGap = -1;
+            double lineLength = 6;
+            double dotSize = 7;
 
+            Canvas container = new Canvas {
+                Width = size,
+                Height = size,
+                IsHitTestVisible = false
+            };
+            Ellipse ring = new Ellipse {
+                Width = size,
+                Height = size,
+                Stroke = Brushes.Blue,
+                StrokeThickness = ringThickness,
+                Fill = Brushes.Transparent
+            };
+            Line lineLeft = new Line {
+                X1 = center - ringRadius - lineGap - lineLength,
+                Y1 = center,
+                X2 = center - ringRadius - lineGap,
+                Y2 = center,
+                Stroke = Brushes.Blue,
+                StrokeThickness = lineThickness
+            };
+            Line lineRight = new Line {
+                X1 = center + ringRadius + lineGap,
+                Y1 = center,
+                X2 = center + ringRadius + lineGap + lineLength,
+                Y2 = center,
+                Stroke = Brushes.Blue,
+                StrokeThickness = lineThickness
+            };
+            Line lineTop = new Line {
+                X1 = center,
+                Y1 = center - ringRadius - lineGap - lineLength,
+                X2 = center,
+                Y2 = center - ringRadius - lineGap,
+                Stroke = Brushes.Blue,
+                StrokeThickness = lineThickness
+            };
+            Line lineBottom = new Line {
+                X1 = center,
+                Y1 = center + ringRadius + lineGap,
+                X2 = center,
+                Y2 = center + ringRadius + lineGap + lineLength,
+                Stroke = Brushes.Blue,
+                StrokeThickness = lineThickness
+            };
+            Ellipse dot = new Ellipse {
+                Width = dotSize,
+                Height = dotSize,
+                Fill = Brushes.Blue
+            };
+            Canvas.SetLeft(dot, center - dotSize / 2);
+            Canvas.SetTop(dot, center - dotSize / 2);
+
+            container.Children.Add(ring);
+            container.Children.Add(lineLeft);
+            container.Children.Add(lineRight);
+            container.Children.Add(lineTop);
+            container.Children.Add(lineBottom);
+            container.Children.Add(dot);
+
+            return container;
         }
     }
 }

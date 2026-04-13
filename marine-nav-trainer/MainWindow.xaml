@@ -1,0 +1,56 @@
+﻿<Window x:Class="marine_nav_trainer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:marine_nav_trainer"
+        xmlns:map="clr-namespace:marine_nav_trainer.Map"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+        mc:Ignorable="d"
+        Title="Marine Nav Trainer"
+        Width="1280"
+        Height="720"
+        SizeToContent="Manual">
+
+    <Grid ClipToBounds="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0">
+            <ui:NavigationView Grid.Row="0"
+                               PaneDisplayMode="Top"
+                               IsBackButtonVisible="Collapsed">       
+                
+                <ui:NavigationView.MenuItems>
+                    <ui:NavigationViewItem Content="System" Padding="10" Margin="12,0,0,0">
+                        <ui:NavigationViewItem.MenuItems>
+                            <ui:NavigationViewItem Content="Dane instalacyjne" MinWidth="155"/>
+                            <ui:NavigationViewItemSeparator />
+                            <ui:NavigationViewItem Content="Zamknij program" Tag="closeAppllication" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
+
+                    <ui:NavigationViewItem Content="Zadania nawigacyjne">
+                        <ui:NavigationViewItem.MenuItems >
+                            <ui:NavigationViewItem Content="Utwórz nowe zadanie" Tag="createExercise" PreviewMouseLeftButtonUp="NavItemOnClick"  MinWidth="180"/>
+                            <ui:NavigationViewItem Content="Lista zadań" />
+                            <ui:NavigationViewItem Content="Rozwiąż zadanie" />
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
+
+                    <ui:NavigationViewItem Content="Pomoc">
+                        <ui:NavigationViewItem.MenuItems>
+                            <ui:NavigationViewItem Content="O programie" Tag="closeFrame" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+                        </ui:NavigationViewItem.MenuItems>
+                    </ui:NavigationViewItem>
+                </ui:NavigationView.MenuItems>
+            </ui:NavigationView>
+        </Border>
+        <Grid Grid.Row="1">
+            <ContentControl x:Name="MainContent"/>
+            <!--<map:MapView/> -->
+        </Grid>
+    </Grid>
+</Window>

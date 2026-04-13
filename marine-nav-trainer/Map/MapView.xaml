@@ -32,15 +32,19 @@
 
                     <ui:Button Content="Linie pomocnicze"
                                Margin="4,0,4,0"
-                               Click="ToggleEdges_Click"/>
+                               Click="ToggleEdgesOnClick"/>
 
                     <ui:Button Content="Resize map"
                                Margin="4,0,4,0"
-                               Click="ResizeMap_Click"/>
+                               Click="ResizeMapOnClick"/>
 
                     <ui:Button Content="Motyw"
                                Margin="4,0,4,0"
-                               Click="ToggleTherme_Click"/>
+                               Click="ToggleThermeOnClick"/>
+                    
+                    <ui:Button Content="Set Mark"
+                               Margin="4,0,4,0"
+                               Click="SetMarkOnClick"/>
                 </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">

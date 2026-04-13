@@ -28,13 +28,13 @@
                         <ui:NavigationViewItem.MenuItems>
                             <ui:NavigationViewItem Content="Dane instalacyjne" MinWidth="155"/>
                             <ui:NavigationViewItemSeparator />
-                            <ui:NavigationViewItem Content="Zamknij program" />
+                            <ui:NavigationViewItem Content="Zamknij program" Tag="closeAppllication" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>
 
                     <ui:NavigationViewItem Content="Zadania nawigacyjne">
                         <ui:NavigationViewItem.MenuItems >
-                            <ui:NavigationViewItem Content="Utwórz nowe zadanie" MinWidth="180"/>
+                            <ui:NavigationViewItem Content="Utwórz nowe zadanie" Tag="createExercise" PreviewMouseLeftButtonUp="NavItemOnClick"  MinWidth="180"/>
                             <ui:NavigationViewItem Content="Lista zadań" />
                             <ui:NavigationViewItem Content="Rozwiąż zadanie" />
                         </ui:NavigationViewItem.MenuItems>
@@ -42,14 +42,15 @@
 
                     <ui:NavigationViewItem Content="Pomoc">
                         <ui:NavigationViewItem.MenuItems>
-                            <ui:NavigationViewItem Content="O programie" />
+                            <ui:NavigationViewItem Content="O programie" Tag="closeFrame" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>
                 </ui:NavigationView.MenuItems>
             </ui:NavigationView>
         </Border>
         <Grid Grid.Row="1">
-            <map:MapView/>
+            <ContentControl x:Name="MainContent"/>
+            <!--<map:MapView/> -->
         </Grid>
     </Grid>
 </Window>

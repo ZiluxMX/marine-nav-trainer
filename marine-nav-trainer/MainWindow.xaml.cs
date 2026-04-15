@@ -25,6 +25,9 @@ namespace marine_nav_trainer {
                     case "closeFrame":
                         CloseFrame();
                         break;
+                    case "solveExercise":
+                        SolveExercise();
+                        break;
                 }
             }
         }
@@ -35,6 +38,29 @@ namespace marine_nav_trainer {
 
         private void CloseFrame() {
             MainContent.Content = null;
+        }
+
+        private void SolveExercise() {
+            SolveCrossbar();
+        }
+
+        private void SolveCrossbar(double PositionLat = 55.8558, double PositionLon = 10.4872,
+                                   double PoiLat = 55.8611, double PoiLon = 10.494,
+                                   double Kdd = 347) {
+            double rad = Math.PI / 180;
+            double meanLat, differenceLat, differenceLon, distanceToCrossbar;
+            double crossbarLat, crossbarLon;
+
+            meanLat = (PositionLat + PoiLat) / 2;
+            differenceLat = (PositionLat - PoiLat);
+            differenceLon = (PositionLon - PoiLon) * Math.Cos(rad * meanLat);
+
+            distanceToCrossbar = differenceLat * Math.Cos(rad * Kdd) + differenceLon * Math.Sin(rad * Kdd);
+
+            crossbarLat = PositionLat + (distanceToCrossbar / 60) * Math.Cos(rad * Kdd);
+            crossbarLon = PositionLon + ((distanceToCrossbar / 60) * Math.Sin(rad * Kdd) / Math.Cos(rad * meanLat));
+
+            Debug.WriteLine($"Pozycja Trawersu Lat={Math.Round(crossbarLat, 4)}  Lon={Math.Round(crossbarLon, 4)}");
         }
     }
 }

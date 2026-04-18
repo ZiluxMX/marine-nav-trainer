@@ -49,6 +49,10 @@
                     <ui:Button Content="Set course"
                                Margin="4,0,4,0"
                                Click="SetCourseOnClick"/>
+
+                    <ui:Button Content="Usuń zaznaczone"
+                               Margin="4,0,4,0"
+                               Click="DeleteSelectedOnClick"/>
                 </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">

@@ -2,21 +2,22 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using Drawing = System.Drawing.Imaging;
-using Rectangle = System.Drawing.Rectangle;
-using Color = System.Drawing.Color;
-using Point = System.Windows.Point;
-using Brushes = System.Windows.Media.Brushes;
-using Threading = System.Windows.Threading;
-
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Drawing.Color;
+using Drawing = System.Drawing.Imaging;
+using Point = System.Windows.Point;
+using Rectangle = System.Drawing.Rectangle;
+using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer.Map {
     public partial class MapView : UserControl {
@@ -46,7 +47,7 @@ namespace marine_nav_trainer.Map {
         private List<CourseLine> _courseLines = new();
 
 
-        // --sekcja TEMP
+        // --sekcja TEMP <- JSON
         private const string MapFile = "Kart-312-3-2021.pdf";
         private const double LatTop = 71.333333;
         private const double LatBottom = 69.000000;
@@ -464,7 +465,20 @@ namespace marine_nav_trainer.Map {
             }
             _isLightMode = !_isLightMode;
         }
-                
+
+        private void ToggleNavTriangles() {
+            double size = 1300;
+            var triangle = new NavTriangle(size);
+
+            Point center = GetVisibleCenter();
+            double centerX = center.X - size / 2;
+            double centerY = center.Y - size / 2;
+
+            Canvas.SetLeft(triangle, centerX );
+            Canvas.SetTop(triangle, centerY );
+
+            MapCanvas.Children.Add(triangle);
+        }
 
         private void ToggleEdgesOnClick(object sender, RoutedEventArgs e) {
             ToggleCalibrationLines();
@@ -488,6 +502,9 @@ namespace marine_nav_trainer.Map {
         private void DeleteSelectedOnClick(object sender, RoutedEventArgs e) {
             RemoveSelectedObject();
         }
+        private void ToggleNavTrianglesOnClick(object sender, RoutedEventArgs e) {
+            ToggleNavTriangles();
+        }
 
         // Static
         private static double Clamp(double v, double min, double max)
@@ -496,6 +513,7 @@ namespace marine_nav_trainer.Map {
             => d * Math.PI / 180.0;
         private static double RadToDeg(double r)
             => r * 180.0 / Math.PI;
+        
 
         // inne        
         private Position? GetMarkPositionFromSource(object source) {
@@ -515,6 +533,15 @@ namespace marine_nav_trainer.Map {
                 current = VisualTreeHelper.GetParent(current);
             }
             return null;
+        }
+        private Point GetVisibleCenter() {
+            double centerX = MapScrollViewer.HorizontalOffset + MapScrollViewer.ViewportWidth / 2;
+            double centerY = MapScrollViewer.VerticalOffset + MapScrollViewer.ViewportHeight / 2;
+
+            return new Point(
+                centerX / MapScale.ScaleX,
+                centerY / MapScale.ScaleY
+            );
         }
 
         private void RemoveSelectedObject() {

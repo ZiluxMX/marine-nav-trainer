@@ -53,6 +53,10 @@
                     <ui:Button Content="Usuń zaznaczone"
                                Margin="4,0,4,0"
                                Click="DeleteSelectedOnClick"/>
+
+                    <ui:Button Content="Trójkąty"
+                               Margin="4,0,4,0"
+                               Click="ToggleNavTrianglesOnClick"/>
                 </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">

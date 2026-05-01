@@ -2,21 +2,22 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using Drawing = System.Drawing.Imaging;
-using Rectangle = System.Drawing.Rectangle;
-using Color = System.Drawing.Color;
-using Point = System.Windows.Point;
-using Brushes = System.Windows.Media.Brushes;
-using Threading = System.Windows.Threading;
-
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Drawing.Color;
+using Drawing = System.Drawing.Imaging;
+using Point = System.Windows.Point;
+using Rectangle = System.Drawing.Rectangle;
+using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer.Map {
     public partial class MapView : UserControl {
@@ -24,17 +25,29 @@ namespace marine_nav_trainer.Map {
         private const double MinZoom = 0.08;
         private const double MaxZoom = 2.0;
         private const double BitmapScalingStep = 0.35;
+        private const double MarkSize = 30;
 
         private Point _panStart;
-        private Line? _activeEdge;
+        private Line? _activeEdge = null;
+        private Line? _currentLine = null;
+        private int _nextIdPosition = 0;
+        private int _nextIdCourse = 0;
         private double _hOffsetStart;
         private double _vOffsetStart;
         private bool _isPanning;
         private bool _edgesVisible = true;
         private bool _isLightMode = true;
         private bool _isMarkMode = false;
+        private bool _isCourseMode = false; 
+        private bool _isDrawingLine = false;
+        private Position? _startPosition = null;
+        private Position? _selectedPosition = null;
+        private CourseLine? _selectedCourseLine = null;
+        private List<Position> _positions = new();
+        private List<CourseLine> _courseLines = new();
 
-        // --sekcja TEMP
+
+        // --sekcja TEMP <- JSON
         private const string MapFile = "Kart-312-3-2021.pdf";
         private const double LatTop = 71.333333;
         private const double LatBottom = 69.000000;
@@ -207,10 +220,45 @@ namespace marine_nav_trainer.Map {
                     MapCanvas.CaptureMouse();
                 return;
             }
+            ClearSelected();
+            if (_isCourseMode) {
+                SetCourseLine(mouse);
+                return;
+            }
             if (_isMarkMode) {
                 SetPositionMark(mouse);
                 return;
-            }         
+            }
+            //Debug.WriteLine($"Source:{mouse.OriginalSource}");
+            if (MarkObject(mouse))
+                return;
+        }
+
+        private void ClearSelected() {
+            if (_selectedPosition != null) {
+                _selectedPosition.Mark.Color = Brushes.Blue;
+                _selectedPosition = null;
+            }
+            if (_selectedCourseLine != null) {
+                _selectedCourseLine.Line.Stroke = Brushes.Blue;
+                _selectedCourseLine = null;
+            }
+        }
+
+        private bool MarkObject(MouseButtonEventArgs mouse) {
+            Position? markPos = GetMarkPositionFromSource(mouse.OriginalSource);
+            if (markPos != null) {
+                markPos.Mark.Color = Brushes.Orange;
+                _selectedPosition = markPos;
+                return true;
+            }
+            CourseLine? markCourse = GetCourseFromSource(mouse.OriginalSource);
+            if (markCourse != null) {
+                markCourse.Line.Stroke = Brushes.Orange;
+                _selectedCourseLine = markCourse;
+                return true;
+            }
+            return false;
         }
 
         private void MapCanvas_MouseMove(object sender, MouseEventArgs mouse) {
@@ -223,13 +271,18 @@ namespace marine_nav_trainer.Map {
                     _activeEdge.Y1 = _activeEdge.Y2 = Clamp(pos.Y, 0, MapCanvas.Height);
                 return;
             }
-            if (!_isPanning)
+            if (_isPanning) {
+                Point cur = mouse.GetPosition(MapScrollViewer);
+                Vector d = cur - _panStart;
+                MapScrollViewer.ScrollToHorizontalOffset(_hOffsetStart - d.X);
+                MapScrollViewer.ScrollToVerticalOffset(_vOffsetStart - d.Y);
                 return;
-
-            Point cur = mouse.GetPosition(MapScrollViewer);
-            Vector d = cur - _panStart;
-            MapScrollViewer.ScrollToHorizontalOffset(_hOffsetStart - d.X);
-            MapScrollViewer.ScrollToVerticalOffset(_vOffsetStart - d.Y);
+            }
+            if (_isDrawingLine && _currentLine != null) {
+                Point pos = mouse.GetPosition(MapCanvas);
+                _currentLine.X2 = pos.X;
+                _currentLine.Y2 = pos.Y;
+            }
         }
 
         private void MapCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs mouse) {
@@ -250,7 +303,7 @@ namespace marine_nav_trainer.Map {
             //Debug.WriteLine($"LAT = {latStr}   LON = {lonStr}");
             CoordsText.Text = $"φ:{latStr}  λ:{lonStr}";
         }
-
+                
         private (double lat, double lon) PixelToGeoCalibrated(double x, double y) {
             double left = LeftEdge.X1;
             double right = RightEdge.X1;
@@ -297,15 +350,94 @@ namespace marine_nav_trainer.Map {
         }
 
         private void SetPositionMark(MouseButtonEventArgs mouse) {
-            Point position = mouse.GetPosition(MapCanvas);
-            double size = 30;
+            Point pos = mouse.GetPosition(MapCanvas);
 
-            Canvas mark = CreatePositionMark(size);
-            Canvas.SetLeft(mark, position.X - size / 2);
-            Canvas.SetTop(mark, position.Y - size / 2);
+            PositionMark mark = new PositionMark(30);
+            Canvas.SetLeft(mark, pos.X - MarkSize / 2);
+            Canvas.SetTop(mark, pos.Y - MarkSize / 2);
 
             MapCanvas.Children.Add(mark);
             _isMarkMode = false;
+
+            var geo = PixelToGeoCalibrated(pos.X, pos.Y);
+            var markPos = new Position {
+                Id = _nextIdPosition,
+                X = pos.X,
+                Y = pos.Y,
+                Lat = geo.lat,
+                Lon = geo.lon,
+                Label = $"P{_nextIdPosition}",
+                Mark = mark
+            };
+
+            _positions.Add(markPos);
+            _nextIdPosition++;
+            mark.Tag = markPos;
+        }
+
+        private void SetCourseLine(MouseButtonEventArgs mouse) {
+            var markPos = GetMarkPositionFromSource(mouse.OriginalSource);
+            bool isCourseComplete = false;
+
+            //Debug.WriteLine($"Source:{mouse.OriginalSource}");
+            //if (markPos != null)
+            //    Debug.WriteLine($"Klik w marker ID={markPos.Id}");
+
+            if (markPos != null && !_isDrawingLine) {
+                _isDrawingLine = true;
+                _startPosition = markPos;
+
+                _currentLine = new Line {
+                    X1 = markPos.X,
+                    Y1 = markPos.Y,
+                    X2 = markPos.X,
+                    Y2 = markPos.Y,
+                    Stroke = Brushes.Blue,
+                    StrokeThickness = 4,
+                    IsHitTestVisible = false
+                };
+                MapCanvas.Children.Add(_currentLine);
+
+            } else if (_isDrawingLine) {
+                _isDrawingLine = false;
+                if (markPos == null) {
+                    Point pos = mouse.GetPosition(MapCanvas);
+                    if (_currentLine != null && _startPosition != null) {
+                        _currentLine.X2 = pos.X;
+                        _currentLine.Y2 = pos.Y;
+                        isCourseComplete = true;                        
+                    }
+                } else {
+                    if (_currentLine != null && _startPosition != null) {
+                        _currentLine.X2 = markPos.X;
+                        _currentLine.Y2 = markPos.Y;
+                        isCourseComplete = true;                        
+                    }
+                }
+                if (isCourseComplete) {
+                    var course = new CourseLine {
+                        Id = _nextIdCourse,
+                        StartPosition = _startPosition,
+                        StartX = _currentLine.X1,
+                        StartY = _currentLine.Y1,
+                        EndX = _currentLine.X2,
+                        EndY = _currentLine.Y2,
+                        CourseOverGround = null, // TODO do dokończenia
+                        CourseCompas = null,
+                        Line = _currentLine
+                    };
+                    if (markPos != null) {
+                        course.EndPosition = markPos;
+                    }
+                    _currentLine.Tag = course;
+                    _courseLines.Add(course);
+                    _nextIdCourse++;
+                    _currentLine.IsHitTestVisible = true;
+                }                    
+                _isCourseMode = false;
+                _currentLine = null;
+                _startPosition = null;
+            }           
         }
 
         // Panel sterowania
@@ -333,7 +465,20 @@ namespace marine_nav_trainer.Map {
             }
             _isLightMode = !_isLightMode;
         }
-                
+
+        private void ToggleNavTriangles() {
+            double size = 1300;
+            var triangle = new NavTriangle(size);
+
+            Point center = GetVisibleCenter();
+            double centerX = center.X - size / 2;
+            double centerY = center.Y - size / 2;
+
+            Canvas.SetLeft(triangle, centerX );
+            Canvas.SetTop(triangle, centerY );
+
+            MapCanvas.Children.Add(triangle);
+        }
 
         private void ToggleEdgesOnClick(object sender, RoutedEventArgs e) {
             ToggleCalibrationLines();
@@ -345,7 +490,20 @@ namespace marine_nav_trainer.Map {
             ToggleThermeStyle();
         }
         private void SetMarkOnClick(object sender, RoutedEventArgs e) {
-            _isMarkMode = true;
+            _isMarkMode = !_isMarkMode;
+            _isCourseMode = false;
+            ClearSelected();
+        }
+        private void SetCourseOnClick(object sender, RoutedEventArgs e) {
+            _isCourseMode = !_isCourseMode;
+            _isMarkMode = false;
+            ClearSelected();
+        }
+        private void DeleteSelectedOnClick(object sender, RoutedEventArgs e) {
+            RemoveSelectedObject();
+        }
+        private void ToggleNavTrianglesOnClick(object sender, RoutedEventArgs e) {
+            ToggleNavTriangles();
         }
 
         // Static
@@ -355,77 +513,66 @@ namespace marine_nav_trainer.Map {
             => d * Math.PI / 180.0;
         private static double RadToDeg(double r)
             => r * 180.0 / Math.PI;
+        
 
-        // inne
-        private Canvas CreatePositionMark(double size) {
-            double center = size / 2;
-            double ringRadius = size / 2;
-            double ringThickness = 5;
-            double lineThickness = 6;
-            double lineGap = -1;
-            double lineLength = 6;
-            double dotSize = 7;
+        // inne        
+        private Position? GetMarkPositionFromSource(object source) {
+            DependencyObject? current = source as DependencyObject;
+            while (current != null) {
+                if (current is FrameworkElement fe && fe.Tag is Position pos)
+                    return pos;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
+        private CourseLine? GetCourseFromSource(object source) {
+            DependencyObject? current = source as DependencyObject;
+            while (current != null) {
+                if (current is FrameworkElement fe && fe.Tag is CourseLine course)
+                    return course;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
+        private Point GetVisibleCenter() {
+            double centerX = MapScrollViewer.HorizontalOffset + MapScrollViewer.ViewportWidth / 2;
+            double centerY = MapScrollViewer.VerticalOffset + MapScrollViewer.ViewportHeight / 2;
 
-            Canvas container = new Canvas {
-                Width = size,
-                Height = size,
-                IsHitTestVisible = false
-            };
-            Ellipse ring = new Ellipse {
-                Width = size,
-                Height = size,
-                Stroke = Brushes.Blue,
-                StrokeThickness = ringThickness,
-                Fill = Brushes.Transparent
-            };
-            Line lineLeft = new Line {
-                X1 = center - ringRadius - lineGap - lineLength,
-                Y1 = center,
-                X2 = center - ringRadius - lineGap,
-                Y2 = center,
-                Stroke = Brushes.Blue,
-                StrokeThickness = lineThickness
-            };
-            Line lineRight = new Line {
-                X1 = center + ringRadius + lineGap,
-                Y1 = center,
-                X2 = center + ringRadius + lineGap + lineLength,
-                Y2 = center,
-                Stroke = Brushes.Blue,
-                StrokeThickness = lineThickness
-            };
-            Line lineTop = new Line {
-                X1 = center,
-                Y1 = center - ringRadius - lineGap - lineLength,
-                X2 = center,
-                Y2 = center - ringRadius - lineGap,
-                Stroke = Brushes.Blue,
-                StrokeThickness = lineThickness
-            };
-            Line lineBottom = new Line {
-                X1 = center,
-                Y1 = center + ringRadius + lineGap,
-                X2 = center,
-                Y2 = center + ringRadius + lineGap + lineLength,
-                Stroke = Brushes.Blue,
-                StrokeThickness = lineThickness
-            };
-            Ellipse dot = new Ellipse {
-                Width = dotSize,
-                Height = dotSize,
-                Fill = Brushes.Blue
-            };
-            Canvas.SetLeft(dot, center - dotSize / 2);
-            Canvas.SetTop(dot, center - dotSize / 2);
+            return new Point(
+                centerX / MapScale.ScaleX,
+                centerY / MapScale.ScaleY
+            );
+        }
 
-            container.Children.Add(ring);
-            container.Children.Add(lineLeft);
-            container.Children.Add(lineRight);
-            container.Children.Add(lineTop);
-            container.Children.Add(lineBottom);
-            container.Children.Add(dot);
+        private void RemoveSelectedObject() {
+            if (_selectedPosition != null) {
+                if (_selectedPosition.Mark != null) {
+                    MapCanvas.Children.Remove(_selectedPosition.Mark);
+                }
+                List<CourseLine>? toRemove =
+                    _courseLines.Where(course => course.StartPosition == _selectedPosition ||
+                    course.EndPosition == _selectedPosition).ToList();
+                foreach (CourseLine course in toRemove) {
+                    if (course.Line != null)
+                        MapCanvas.Children.Remove(course.Line);
+                    _courseLines.Remove(course);
+                }
+                _positions.Remove(_selectedPosition);
+                _selectedPosition.Mark = null;
+                _selectedPosition = null;
 
-            return container;
+                return;
+            }
+            if (_selectedCourseLine != null) {
+                if (_selectedCourseLine.Line != null) {
+                    MapCanvas.Children.Remove(_selectedCourseLine.Line);
+                }
+                _courseLines.Remove(_selectedCourseLine);
+                _selectedCourseLine.Line = null;
+                _selectedCourseLine = null;
+
+                return;
+            }
         }
     }
 }

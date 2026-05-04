@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="marine_nav_trainer.Windows.Views.TaskCreatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:marine_nav_trainer.Windows.Views"
+             xmlns:map="clr-namespace:marine_nav_trainer.Map"
+             xmlns:calculator="clr-namespace:marine_nav_trainer.Calculators.UI.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="1920">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <calculator:CalculatorView/>
+        </Grid>
+        <Grid Grid.Column="1">
+            <map:MapView/>
+        </Grid>
+    </Grid>
+</UserControl>

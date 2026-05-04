@@ -1,7 +1,4 @@
 ﻿using marine_nav_trainer.Calculators.Core.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace marine_nav_trainer.Calculators.Modules.Crossbar {
     public class CrossbarCalculator : ICalculator<CrossbarInput, CrossbarResult> {
@@ -13,7 +10,7 @@ namespace marine_nav_trainer.Calculators.Modules.Crossbar {
             double differenceLat = input.PositionLat - input.PoiLat;
             double differenceLon = (input.PositionLon - input.PoiLon) * Math.Cos(rad * meanLat);
 
-            double distanceToCrossbar = differenceLat * Math.Cos(rad * input.Kdd) + 
+            double distanceToCrossbar = differenceLat * Math.Cos(rad * input.Kdd) +
                                         differenceLon * Math.Sin(rad * input.Kdd);
 
             double crossLat = input.PositionLat + (distanceToCrossbar / 60.0) * Math.Cos(rad * input.Kdd);

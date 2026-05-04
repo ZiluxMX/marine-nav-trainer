@@ -1,11 +1,10 @@
-﻿using PdfiumViewer;
-using System.Diagnostics;
+﻿using marine_nav_trainer.Map.Models;
+using marine_nav_trainer.Map.UI.Controls;
+using PdfiumViewer;
 using System.Drawing;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -38,7 +37,7 @@ namespace marine_nav_trainer.Map {
         private bool _edgesVisible = true;
         private bool _isLightMode = true;
         private bool _isMarkMode = false;
-        private bool _isCourseMode = false; 
+        private bool _isCourseMode = false;
         private bool _isDrawingLine = false;
         private Position? _startPosition = null;
         private Position? _selectedPosition = null;
@@ -303,7 +302,7 @@ namespace marine_nav_trainer.Map {
             //Debug.WriteLine($"LAT = {latStr}   LON = {lonStr}");
             CoordsText.Text = $"φ:{latStr}  λ:{lonStr}";
         }
-                
+
         private (double lat, double lon) PixelToGeoCalibrated(double x, double y) {
             double left = LeftEdge.X1;
             double right = RightEdge.X1;
@@ -405,13 +404,13 @@ namespace marine_nav_trainer.Map {
                     if (_currentLine != null && _startPosition != null) {
                         _currentLine.X2 = pos.X;
                         _currentLine.Y2 = pos.Y;
-                        isCourseComplete = true;                        
+                        isCourseComplete = true;
                     }
                 } else {
                     if (_currentLine != null && _startPosition != null) {
                         _currentLine.X2 = markPos.X;
                         _currentLine.Y2 = markPos.Y;
-                        isCourseComplete = true;                        
+                        isCourseComplete = true;
                     }
                 }
                 if (isCourseComplete) {
@@ -433,11 +432,11 @@ namespace marine_nav_trainer.Map {
                     _courseLines.Add(course);
                     _nextIdCourse++;
                     _currentLine.IsHitTestVisible = true;
-                }                    
+                }
                 _isCourseMode = false;
                 _currentLine = null;
                 _startPosition = null;
-            }           
+            }
         }
 
         // Panel sterowania
@@ -474,8 +473,8 @@ namespace marine_nav_trainer.Map {
             double centerX = center.X - size / 2;
             double centerY = center.Y - size / 2;
 
-            Canvas.SetLeft(triangle, centerX );
-            Canvas.SetTop(triangle, centerY );
+            Canvas.SetLeft(triangle, centerX);
+            Canvas.SetTop(triangle, centerY);
 
             MapCanvas.Children.Add(triangle);
         }
@@ -513,7 +512,7 @@ namespace marine_nav_trainer.Map {
             => d * Math.PI / 180.0;
         private static double RadToDeg(double r)
             => r * 180.0 / Math.PI;
-        
+
 
         // inne        
         private Position? GetMarkPositionFromSource(object source) {

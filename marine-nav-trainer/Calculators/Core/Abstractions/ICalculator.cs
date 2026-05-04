@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace marine_nav_trainer.Calculators.Core.Abstractions
-{
-    interface ICalculator
-    {
+﻿namespace marine_nav_trainer.Calculators.Core.Abstractions {
+    public interface ICalculator<TInput, TResult> {
+        TResult Calculate(TInput input);
     }
 }

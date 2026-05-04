@@ -1,7 +1,4 @@
 ﻿using marine_nav_trainer.Calculators.Core.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace marine_nav_trainer.Calculators.Modules.ApparentWind {
     public class ApparentWindCalculator : ICalculator<ApparentWindInput, ApparentWindResult> {

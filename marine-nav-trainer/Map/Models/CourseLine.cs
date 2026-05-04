@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Shapes;
+﻿using System.Windows.Shapes;
 
-namespace marine_nav_trainer.Map {
+namespace marine_nav_trainer.Map.Models {
     internal class CourseLine {
         public int Id { get; set; }
         public required Position StartPosition { get; set; }
@@ -13,7 +10,7 @@ namespace marine_nav_trainer.Map {
         public double EndX { get; set; }
         public double EndY { get; set; }
         public double? CourseOverGround { get; set; }
-        public double? CourseCompas {  get; set; }
+        public double? CourseCompas { get; set; }
         public Line? Line { get; set; }
     }
 }

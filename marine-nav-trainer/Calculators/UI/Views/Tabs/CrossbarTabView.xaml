@@ -7,15 +7,15 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
              mc:Ignorable="d" 
              d:DesignHeight="450" Width="500">
-    <Grid>
-        <ui:Button Content="Oblicz" Click="Oblicz_Click" Margin="386,359,0,0" VerticalAlignment="Top"/>
+    
+    <Grid>        
         <ui:TextBlock HorizontalAlignment="Left" Margin="25,25,0,0" Text="Współrzędne punktu do trawersu" VerticalAlignment="Top"/>
         <ui:TextBlock HorizontalAlignment="Left" Margin="25,67,0,0" Text="Szerokość" VerticalAlignment="Top"/>
         <ui:TextBlock HorizontalAlignment="Left" Margin="250,67,0,0" Text="Długość" VerticalAlignment="Top"/>
         <ui:NumberBox x:Name="PoiLat" HorizontalAlignment="Left" Margin="102,59,0,0" Value="55.8611" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
         <ui:NumberBox x:Name="PoiLon" HorizontalAlignment="Left" Margin="328,59,0,0" Value="10.494" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
 
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,125,0,0" Text="Współrzędne statku" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,125,0,0" Text="Pozycja statku" VerticalAlignment="Top"/>
         <ui:TextBlock HorizontalAlignment="Left" Margin="25,167,0,0" Text="Szerokość" VerticalAlignment="Top"/>
         <ui:TextBlock HorizontalAlignment="Left" Margin="250,167,0,0" Text="Długość" VerticalAlignment="Top"/>
         <ui:NumberBox x:Name="PositionLat" HorizontalAlignment="Left" Margin="102,159,0,0" Value="55.8558" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
@@ -29,5 +29,6 @@
         <ui:NumberBox x:Name="CrossbarLat" HorizontalAlignment="Left" Margin="102,309,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
         <ui:TextBlock HorizontalAlignment="Left" Margin="250,317,0,0" Text="Długość" VerticalAlignment="Top"/>
         <ui:NumberBox x:Name="CrossbarLon" HorizontalAlignment="Left" Margin="328,309,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
+        <ui:Button Content="Oblicz" Click="Oblicz_Click" Margin="386,359,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

@@ -9,6 +9,23 @@
              MinWidth="500"
              d:DesignHeight="450" Width="500">
     <Grid>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,25,0,0" Text="Parametry statku" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,57,0,0" Text="Prędkość" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="250,57,0,0" Text="Kurs rzeczywisty" VerticalAlignment="Top"/>
+        <ui:NumberBox x:Name="BoatSpeed" HorizontalAlignment="Left" Margin="25,82,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="999"/>
+        <ui:NumberBox x:Name="BoatHeading" HorizontalAlignment="Left" Margin="250,82,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
 
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,125,0,0" Text="Parametry wiatru" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,157,0,0" Text="Prędkość" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="250,157,0,0" Text="Kierunek" VerticalAlignment="Top"/>
+        <ui:NumberBox x:Name="WindSpeed" HorizontalAlignment="Left" Margin="25,182,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="999"/>
+        <ui:NumberBox x:Name="WindDirection" HorizontalAlignment="Left" Margin="250,182,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
+
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,242,0,0" Text="Parametry wiatru pozornego" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="25,267,0,0" Text="Kierunek rzeczywisty" VerticalAlignment="Top"/>
+        <ui:TextBlock HorizontalAlignment="Left" Margin="250,272,0,0" Text="Kierunek pozorny" VerticalAlignment="Top"/>
+        <ui:NumberBox x:Name="CompasWindDirection" HorizontalAlignment="Left" Margin="25,292,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
+        <ui:NumberBox x:Name="ApparentWindDirection" HorizontalAlignment="Left" Margin="250,292,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
+        <ui:Button Content="Oblicz" Click="Oblicz_Click" Margin="308,344,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

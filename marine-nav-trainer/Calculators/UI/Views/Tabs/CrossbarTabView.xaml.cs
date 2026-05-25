@@ -1,23 +1,28 @@
-﻿using marine_nav_trainer.Calculators.Core.Factory;
+﻿using marine_nav_trainer.Calculators.Core.Abstractions;
+using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.Crossbar;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
     public partial class CrossbarTabView : UserControl {
-        private CalculatorFactory? _calculatorFactory;
+        private readonly ICalculator<CrossbarInput, CrossbarResult> _crossbarCalc;
 
         public CrossbarTabView() {
             InitializeComponent();
+
+            var calculatorFactory = new CalculatorFactory();
+            calculatorFactory.Register<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar, new CrossbarCalculator());
+            _crossbarCalc = calculatorFactory.Get<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar);
         }
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
             double? positionLat, positionLon, poiLat, poiLon, kdd;
             if (PositionLat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość statk\" nie może być puste!");
+                MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!");
                 return;
             }
             if (PositionLon.Value == null) {
-                MessageBox.Show("Pole \"Długość statk\" nie może być puste!");
+                MessageBox.Show("Pole \"Długość statku\" nie może być puste!");
                 return;
             }
             if (PoiLat.Value == null) {
@@ -37,12 +42,8 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             poiLat = PoiLat.Value;
             poiLon = PoiLon.Value;
             kdd = Kdd.Value;
-
-            _calculatorFactory = new CalculatorFactory();
-            _calculatorFactory.Register<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar, new CrossbarCalculator());
-            var crossbarCalc = _calculatorFactory.Get<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar);
-
-            var crossbar = crossbarCalc.Calculate(new CrossbarInput {
+                       
+            var crossbar = _crossbarCalc.Calculate(new CrossbarInput {
                 PositionLat = (double)positionLat,
                 PositionLon = (double)positionLon,
                 PoiLat = (double)poiLat,

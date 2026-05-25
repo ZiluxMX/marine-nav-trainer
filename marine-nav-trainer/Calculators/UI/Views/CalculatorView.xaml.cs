@@ -22,6 +22,9 @@ namespace marine_nav_trainer.Calculators.UI.Views {
                 view = key switch {
                     "apparentWind" => new ApparentWindTabView(),
                     "crossbar" => new CrossbarTabView(),
+                    "deadReckoning" => new DeadReckoningTabView(),
+                    "observedPosition" => new ObservedPositionTabView(),
+                    "runningFix" => new RunningFixTabView(),
                     _ => throw new Exception("Unknown view")
                 };
                 _viewCache[key] = view;

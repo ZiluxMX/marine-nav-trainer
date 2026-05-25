@@ -19,6 +19,9 @@
                     <ui:NavigationView.MenuItems>
                         <ui:NavigationViewItem Content="Wiatr pozorny" Tag="apparentWind" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
                         <ui:NavigationViewItem Content="Trawers" Tag="crossbar" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
+                        <ui:NavigationViewItem Content="Pozycja obserwowana" Tag="observedPosition" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
+                        <ui:NavigationViewItem Content="Przesunięcie LOP" Tag="runningFix" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
+                        <ui:NavigationViewItem Content="Pozycja zliczona" Tag="deadReckoning" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
                     </ui:NavigationView.MenuItems>
                 </ui:NavigationView>
                 <Grid Grid.Column="1">

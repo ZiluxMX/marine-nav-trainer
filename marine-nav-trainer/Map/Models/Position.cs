@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using marine_nav_trainer.Map.UI.Controls;
 
-namespace marine_nav_trainer.Map {
+namespace marine_nav_trainer.Map.Models {
     internal class Position {
-        public int Id {  get; set; }
+        public int Id { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
         public double Lat { get; set; }

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
-namespace marine_nav_trainer.Map {
-    internal class PositionMark : Canvas{
+namespace marine_nav_trainer.Map.UI.Controls {
+    internal class PositionMark : Canvas {
         private readonly Ellipse _dot;
         private readonly Ellipse _ring;
         private readonly Line _lineLeft;
@@ -81,7 +77,7 @@ namespace marine_nav_trainer.Map {
 
             ApplyColor();
         }
-        
+
         public Brush Color {
             get => _color;
             set {

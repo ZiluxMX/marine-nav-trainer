@@ -5,7 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using Point = System.Windows.Point;
 
-namespace marine_nav_trainer.Map {
+namespace marine_nav_trainer.Map.UI.Controls {
     internal class NavTriangle : Canvas {
         public double AngleMain { get; private set; }
         public double AngleRed { get; private set; }

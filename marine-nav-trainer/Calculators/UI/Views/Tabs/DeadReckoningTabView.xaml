@@ -1,30 +1,76 @@
-﻿<UserControl x:Class="marine_nav_trainer.Calculators.UI.Views.Tabs.DeadReckoningTabView"
+<UserControl x:Class="marine_nav_trainer.Calculators.UI.Views.Tabs.DeadReckoningTabView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:marine_nav_trainer.Calculators.UI.Views.Tabs"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
-             mc:Ignorable="d"     
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
              MinWidth="500"
              d:DesignHeight="450" Width="500">
-    <Grid>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,25,0,0" Text="Pozycja statku" VerticalAlignment="Top"/>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,57,0,0" Text="Szerokość" VerticalAlignment="Top"/>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="250,57,0,0" Text="Długość" VerticalAlignment="Top"/>
-        <ui:NumberBox x:Name="StartLat" HorizontalAlignment="Left" Margin="25,82,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
-        <ui:NumberBox x:Name="StartLon" HorizontalAlignment="Left" Margin="250,82,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
-        
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,132,0,0" Text="KdD" VerticalAlignment="Top"/>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="250,132,0,0" Text="Droga (Nm)" VerticalAlignment="Top"/>
-        <ui:NumberBox x:Name="Kdd" HorizontalAlignment="Left" Margin="25,157,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
-        <ui:NumberBox x:Name="DistanceNm" HorizontalAlignment="Left" Margin="250,157,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="9999"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,20,24,24">
 
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,242,0,0" Text="Współrzędne pozycji zliczonej" VerticalAlignment="Top"/>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="25,267,0,0" Text="Szerokość" VerticalAlignment="Top"/>
-        <ui:TextBlock HorizontalAlignment="Left" Margin="250,272,0,0" Text="Długość" VerticalAlignment="Top"/>
-        <ui:NumberBox x:Name="DeadReckoningLat" HorizontalAlignment="Left" Margin="25,292,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
-        <ui:NumberBox x:Name="DeadReckoningLon" HorizontalAlignment="Left" Margin="250,292,0,0" VerticalAlignment="Top" Width="120" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
-        <ui:Button Content="Oblicz" Click="Oblicz_Click" Margin="308,344,0,0" VerticalAlignment="Top"/>
-    </Grid>
+            <!-- Pozycja startowa -->
+            <ui:TextBlock Text="Pozycja statku" FontTypography="BodyStrong" Margin="0,0,0,10"/>
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <ui:TextBlock Text="Szerokość (°)"/>
+                    <ui:NumberBox x:Name="StartLat" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <ui:TextBlock Text="Długość (°)"/>
+                    <ui:NumberBox x:Name="StartLon" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
+                </StackPanel>
+            </Grid>
+
+            <Separator Margin="0,0,0,5"/>
+
+            <!-- Ruch -->
+            <ui:TextBlock Text="Parametry ruchu" FontTypography="BodyStrong" Margin="0,0,0,10"/>
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <ui:TextBlock Text="KdD (°)"/>
+                    <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <ui:TextBlock Text="Droga (Nm)"/>
+                    <ui:NumberBox x:Name="DistanceNm" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="9999"/>
+                </StackPanel>
+            </Grid>
+
+            <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,20"/>
+
+            <Separator Margin="0,0,0,5"/>
+
+            <!-- Wyniki -->
+            <ui:TextBlock Text="Wyniki — pozycja zliczona" FontTypography="BodyStrong" Margin="0,0,0,10"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <ui:TextBlock Text="Szerokość (°)"/>
+                    <ui:NumberBox x:Name="DeadReckoningLat" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
+                    <ui:TextBlock x:Name="DeadReckoningLatDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <ui:TextBlock Text="Długość (°)"/>
+                    <ui:NumberBox x:Name="DeadReckoningLon" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
+                    <ui:TextBlock x:Name="DeadReckoningLonDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:marine_nav_trainer.Map"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="900">
+             d:DesignHeight="450" d:DesignWidth="1000">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -41,7 +41,7 @@
                     <ui:Button Content="Motyw"
                                Margin="4,0,4,0"
                                Click="ToggleThermeOnClick"/>
-                    
+
                     <ui:Button Content="Set Mark"
                                Margin="4,0,4,0"
                                Click="SetMarkOnClick"/>
@@ -57,6 +57,10 @@
                     <ui:Button Content="Trójkąty"
                                Margin="4,0,4,0"
                                Click="ToggleNavTrianglesOnClick"/>
+
+                    <ui:Button Content="Czyść mapę"
+                               Margin="4,0,4,0"
+                               Click="ClearOnClick"/>
                 </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">

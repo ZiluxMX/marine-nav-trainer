@@ -1,4 +1,5 @@
-﻿using marine_nav_trainer.Calculators.Core.Abstractions;
+using marine_nav_trainer.Calculators.Core;
+using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.ObservedPosition;
 using System.Windows;
@@ -16,48 +17,27 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         }
 
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            double? poiALat, poiALon, bearingA, poiBLat, poiBLon, bearingB;
-            if (PoiALat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość punktu 1\" nie może być puste!");
-                return;
-            }
-            if (PoiALon.Value == null) {
-                MessageBox.Show("Pole \"Długość punktu 1\" nie może być puste!");
-                return;
-            }
-            if (BearingA.Value == null) {
-                MessageBox.Show("Pole \"Namiar punktu 1\" nie może być puste!");
-                return;
-            }
-            if (PoiBLat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość punktu 2\" nie może być puste!");
-                return;
-            }
-            if (PoiBLon.Value == null) {
-                MessageBox.Show("Pole \"Długość punktu 2\" nie może być puste!");
-                return;
-            }
-            if (BearingB.Value == null) {
-                MessageBox.Show("Pole \"Namiar punktu 2\" nie może być puste!");
-                return;
-            }
-            poiALat = PoiALat.Value;
-            poiALon = PoiALon.Value;
-            bearingA = BearingA.Value;
-            poiBLat = PoiBLat.Value;
-            poiBLon = PoiBLon.Value;
-            bearingB = BearingB.Value;
+            if (PoiALat.Value == null) { MessageBox.Show("Pole \"Szerokość punktu 1\" nie może być puste!"); return; }
+            if (PoiALon.Value == null) { MessageBox.Show("Pole \"Długość punktu 1\" nie może być puste!"); return; }
+            if (BearingA.Value == null) { MessageBox.Show("Pole \"Namiar punktu 1\" nie może być puste!"); return; }
+            if (PoiBLat.Value == null) { MessageBox.Show("Pole \"Szerokość punktu 2\" nie może być puste!"); return; }
+            if (PoiBLon.Value == null) { MessageBox.Show("Pole \"Długość punktu 2\" nie może być puste!"); return; }
+            if (BearingB.Value == null) { MessageBox.Show("Pole \"Namiar punktu 2\" nie może być puste!"); return; }
 
-            var observedPos = _observedPositionCalc.Calculate(new ObservedPositionInput {
-                PoiALat = (double)poiALat,
-                PoiALon = (double)poiALon,
-                BearingA = (double)bearingA,
-                PoiBLat = (double)poiBLat,
-                PoiBLon = (double)poiBLon,
-                BearingB = (double)bearingB,
+            var result = _observedPositionCalc.Calculate(new ObservedPositionInput {
+                PoiALat = (double)PoiALat.Value,
+                PoiALon = (double)PoiALon.Value,
+                BearingA = (double)BearingA.Value,
+                PoiBLat = (double)PoiBLat.Value,
+                PoiBLon = (double)PoiBLon.Value,
+                BearingB = (double)BearingB.Value,
             });
-            ObservedPosLat.Value = observedPos.Lat;
-            ObservedPosLon.Value = observedPos.Lon;
+
+            ObservedPosLat.Value = result.Lat;
+            ObservedPosLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
+
+            ObservedPosLon.Value = result.Lon;
+            ObservedPosLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

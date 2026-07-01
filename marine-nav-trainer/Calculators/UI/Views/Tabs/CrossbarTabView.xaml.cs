@@ -1,4 +1,5 @@
-﻿using marine_nav_trainer.Calculators.Core.Abstractions;
+using marine_nav_trainer.Calculators.Core;
+using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.Crossbar;
 using System.Windows;
@@ -15,43 +16,27 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             calculatorFactory.Register<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar, new CrossbarCalculator());
             _crossbarCalc = calculatorFactory.Get<CrossbarInput, CrossbarResult>(CalculatorType.Crossbar);
         }
+
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            double? positionLat, positionLon, poiLat, poiLon, kdd;
-            if (PositionLat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!");
-                return;
-            }
-            if (PositionLon.Value == null) {
-                MessageBox.Show("Pole \"Długość statku\" nie może być puste!");
-                return;
-            }
-            if (PoiLat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!");
-                return;
-            }
-            if (PoiLon.Value == null) {
-                MessageBox.Show("Pole \"Długość punktu\" nie może być puste!");
-                return;
-            }
-            if (Kdd.Value == null) {
-                MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!");
-                return;
-            }
-            positionLat = PositionLat.Value;
-            positionLon = PositionLon.Value;
-            poiLat = PoiLat.Value;
-            poiLon = PoiLon.Value;
-            kdd = Kdd.Value;
-                       
-            var crossbar = _crossbarCalc.Calculate(new CrossbarInput {
-                PositionLat = (double)positionLat,
-                PositionLon = (double)positionLon,
-                PoiLat = (double)poiLat,
-                PoiLon = (double)poiLon,
-                Kdd = (double)kdd
+            if (PositionLat.Value == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
+            if (PositionLon.Value == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
+            if (PoiLat.Value == null) { MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!"); return; }
+            if (PoiLon.Value == null) { MessageBox.Show("Pole \"Długość punktu\" nie może być puste!"); return; }
+            if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
+
+            var result = _crossbarCalc.Calculate(new CrossbarInput {
+                PositionLat = (double)PositionLat.Value,
+                PositionLon = (double)PositionLon.Value,
+                PoiLat = (double)PoiLat.Value,
+                PoiLon = (double)PoiLon.Value,
+                Kdd = (double)Kdd.Value
             });
-            CrossbarLat.Value = crossbar.Lat;
-            CrossbarLon.Value = crossbar.Lon;
+
+            CrossbarLat.Value = result.Lat;
+            CrossbarLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
+
+            CrossbarLon.Value = result.Lon;
+            CrossbarLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

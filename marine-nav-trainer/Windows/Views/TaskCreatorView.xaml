@@ -15,10 +15,11 @@
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
-            <calculator:CalculatorView/>
+            <calculator:CalculatorView x:Name="CalculatorViewControl"/>
         </Grid>
+
         <Grid Grid.Column="1">
-            <map:MapView/>
+            <map:MapView x:Name="MapViewControl"/>
         </Grid>
     </Grid>
 </UserControl>

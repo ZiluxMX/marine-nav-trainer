@@ -1,6 +1,7 @@
 ﻿using marine_nav_trainer.Map.Models;
 using marine_nav_trainer.Map.UI.Controls;
 using PdfiumViewer;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -19,7 +20,7 @@ using Rectangle = System.Drawing.Rectangle;
 using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer.Map {
-    public partial class MapView : UserControl {
+    public partial class MapView : UserControl, IDisposable {
         private const double ZoomStep = 1.1;
         private const double MinZoom = 0.08;
         private const double MaxZoom = 2.0;
@@ -117,7 +118,8 @@ namespace marine_nav_trainer.Map {
                     bmpData.Stride * bitmap.Height,
                     bmpData.Stride);
                 return wb;
-            } finally {
+            }
+            finally {
                 bitmap.UnlockBits(bmpData);
             }
         }
@@ -397,7 +399,8 @@ namespace marine_nav_trainer.Map {
                 };
                 MapCanvas.Children.Add(_currentLine);
 
-            } else if (_isDrawingLine) {
+            }
+            else if (_isDrawingLine) {
                 _isDrawingLine = false;
                 if (markPos == null) {
                     Point pos = mouse.GetPosition(MapCanvas);
@@ -406,7 +409,8 @@ namespace marine_nav_trainer.Map {
                         _currentLine.Y2 = pos.Y;
                         isCourseComplete = true;
                     }
-                } else {
+                }
+                else {
                     if (_currentLine != null && _startPosition != null) {
                         _currentLine.X2 = markPos.X;
                         _currentLine.Y2 = markPos.Y;
@@ -456,7 +460,8 @@ namespace marine_nav_trainer.Map {
                     ApplicationTheme.Dark,
                     WindowBackdropType.Mica,
                     true);
-            } else {
+            }
+            else {
                 ApplicationThemeManager.Apply(
                     ApplicationTheme.Light,
                     WindowBackdropType.Mica,
@@ -503,6 +508,26 @@ namespace marine_nav_trainer.Map {
         }
         private void ToggleNavTrianglesOnClick(object sender, RoutedEventArgs e) {
             ToggleNavTriangles();
+        }
+
+        private void ClearOnClick(object sender, RoutedEventArgs e) {
+            foreach (var pos in _positions)
+                if (pos.Mark != null) pos.Mark.Tag = null;
+            foreach (var course in _courseLines)
+                if (course.Line != null) course.Line.Tag = null;
+
+            _positions.Clear();
+            _courseLines.Clear();
+
+            MapCanvas.Children.Clear();
+            MapImage.Source = null;
+
+            _selectedPosition = null;
+            _selectedCourseLine = null;
+            _currentLine = null;
+            _startPosition = null;
+
+            MapCanvas.UpdateLayout();
         }
 
         // Static
@@ -572,6 +597,24 @@ namespace marine_nav_trainer.Map {
 
                 return;
             }
+        }
+
+        public void Dispose() {
+            foreach (var pos in _positions)
+                if (pos.Mark != null) pos.Mark.Tag = null;
+            foreach (var course in _courseLines)
+                if (course.Line != null) course.Line.Tag = null;
+
+            _positions.Clear();
+            _courseLines.Clear();
+
+            MapCanvas.Children.Clear();
+            MapImage.Source = null;
+
+            _selectedPosition = null;
+            _selectedCourseLine = null;
+            _currentLine = null;
+            _startPosition = null;
         }
     }
 }

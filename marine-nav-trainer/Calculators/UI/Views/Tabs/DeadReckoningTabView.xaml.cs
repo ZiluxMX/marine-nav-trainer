@@ -1,4 +1,5 @@
-﻿using marine_nav_trainer.Calculators.Core.Abstractions;
+using marine_nav_trainer.Calculators.Core;
+using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.DeadReckoning;
 using System.Windows;
@@ -14,37 +15,25 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             calculatorFactory.Register<DeadReckoningInput, DeadReckoningResult>(CalculatorType.DeadReckoning, new DeadReckoningCalculator());
             _deadReckoningCalc = calculatorFactory.Get<DeadReckoningInput, DeadReckoningResult>(CalculatorType.DeadReckoning);
         }
-        private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            double? positionLat, positionLon, kdd, distance;
-            if (StartLat.Value == null) {
-                MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!");
-                return;
-            }
-            if (StartLon.Value == null) {
-                MessageBox.Show("Pole \"Długość statku\" nie może być puste!");
-                return;
-            }
-            if (Kdd.Value == null) {
-                MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!");
-                return;
-            }
-            if (DistanceNm.Value == null) {
-                MessageBox.Show("Pole \"Droga (Nm)\" nie może być puste!");
-                return;
-            }
-            positionLat = StartLat.Value;
-            positionLon = StartLon.Value;
-            kdd = Kdd.Value;
-            distance = DistanceNm.Value;
 
-            var deadReckoningPos = _deadReckoningCalc.Calculate(new DeadReckoningInput {
-                StartLat = (double)positionLat,
-                StartLon = (double)positionLon,
-                Kdd = (double)kdd,
-                DistanceNm = (double)distance
+        private void Oblicz_Click(object sender, RoutedEventArgs e) {
+            if (StartLat.Value == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
+            if (StartLon.Value == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
+            if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
+            if (DistanceNm.Value == null) { MessageBox.Show("Pole \"Droga (Nm)\" nie może być puste!"); return; }
+
+            var result = _deadReckoningCalc.Calculate(new DeadReckoningInput {
+                StartLat = (double)StartLat.Value,
+                StartLon = (double)StartLon.Value,
+                Kdd = (double)Kdd.Value,
+                DistanceNm = (double)DistanceNm.Value
             });
-            DeadReckoningLat.Value = deadReckoningPos.Lat;
-            DeadReckoningLon.Value = deadReckoningPos.Lon;
+
+            DeadReckoningLat.Value = result.Lat;
+            DeadReckoningLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
+
+            DeadReckoningLon.Value = result.Lon;
+            DeadReckoningLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using marine_nav_trainer.Map.Models;
 using marine_nav_trainer.Map.UI.Controls;
+using marine_nav_trainer.Map.UI.Views;
 using PdfiumViewer;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -13,8 +13,11 @@ using System.Windows.Shapes;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 using Brushes = System.Windows.Media.Brushes;
-using Color = System.Drawing.Color;
 using Drawing = System.Drawing.Imaging;
+using MessageBox = System.Windows.MessageBox;
+using MessageBoxButton = System.Windows.MessageBoxButton;
+using MessageBoxImage = System.Windows.MessageBoxImage;
+using Path = System.IO.Path;
 using Point = System.Windows.Point;
 using Rectangle = System.Drawing.Rectangle;
 using Threading = System.Windows.Threading;
@@ -45,54 +48,61 @@ namespace marine_nav_trainer.Map {
         private CourseLine? _selectedCourseLine = null;
         private List<Position> _positions = new();
         private List<CourseLine> _courseLines = new();
+        private List<NavTriangle> _navTriangles = new();
+        private string _currentMapPath = string.Empty;
+        private bool _disposed;
 
 
         // --sekcja TEMP <- JSON
-        private const string MapFile = "Kart-312-3-2021.pdf";
+        private const string DefaultMapFile = "Elblad_Podejscie.pdf";//Elblad_Podejscie  Kart-312-3-2021
         private const double LatTop = 71.333333;
         private const double LatBottom = 69.000000;
         private const double LonLeft = 12.000000;
         private const double LonRight = 21.000000;
         // -- koniec sekcji TEMP
+
+        private static readonly string AssetsBase = Path.Combine(
+            Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
+            "Assets"
+        );
+        private static readonly string MapsDir = Path.Combine(AssetsBase, "Maps");
+
         public MapView() {
             InitializeComponent();
-            LoadPdfMap();
+            //LoadPdfMap(Path.Combine(MapsDir, DefaultMapFile));
             Dispatcher.InvokeAsync(() => {
                 ResizeMapToMainWindow();
             }, Threading.DispatcherPriority.Loaded);
         }
 
-        private void LoadPdfMap() {
-            string pdfPath = System.IO.Path.Combine(
-                Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
-                "Assets",
-                MapFile
-            );
-
+        private void LoadPdfMap(string pdfPath) {
             using var document = PdfDocument.Load(pdfPath);
             int pageIndex = 0;
             int dpi = 300; //400
             var size = document.PageSizes[pageIndex];
             int width = (int)(size.Width / 72.0 * dpi);
             int height = (int)(size.Height / 72.0 * dpi);
-            using var bitmap = new Bitmap(width, height, Drawing.PixelFormat.Format32bppRgb);
 
-            using (var g = Graphics.FromImage(bitmap)) {
-                g.Clear(Color.White);
-                document.Render(
-                    pageIndex,
-                    g,
-                    dpi,
-                    dpi,
-                    new Rectangle(0, 0, width, height),
-                    false);
-            }
+            using var bitmap = (Bitmap)document.Render(
+                pageIndex,
+                width,
+                height,
+                dpi,
+                dpi,
+                PdfRotation.Rotate0,
+                PdfRenderFlags.None);
+
             var wb = ConvertToWriteableBitmap(bitmap);
+            MapScale.ScaleX = 1;
+            MapScale.ScaleY = 1;
+
             MapImage.Source = wb;
             MapCanvas.Width = wb.PixelWidth;
             MapCanvas.Height = wb.PixelHeight;
             MapImage.Width = wb.PixelWidth;
             MapImage.Height = wb.PixelHeight;
+
+            _currentMapPath = pdfPath;
 
             //Debug.WriteLine($"Height={height}  Width={width}");
 
@@ -127,6 +137,12 @@ namespace marine_nav_trainer.Map {
         private void InitCalibrationEdges() {
             double w = MapCanvas.Width;
             double h = MapCanvas.Height;
+
+            _edgesVisible = true;
+            LeftEdge.Visibility = Visibility.Visible;
+            RightEdge.Visibility = Visibility.Visible;
+            TopEdge.Visibility = Visibility.Visible;
+            BottomEdge.Visibility = Visibility.Visible;
 
             LeftEdge.X1 = LeftEdge.X2 = 0;
             LeftEdge.Y1 = 0;
@@ -481,6 +497,7 @@ namespace marine_nav_trainer.Map {
             Canvas.SetLeft(triangle, centerX);
             Canvas.SetTop(triangle, centerY);
 
+            _navTriangles.Add(triangle);
             MapCanvas.Children.Add(triangle);
         }
 
@@ -511,21 +528,74 @@ namespace marine_nav_trainer.Map {
         }
 
         private void ClearOnClick(object sender, RoutedEventArgs e) {
-            foreach (var pos in _positions)
-                if (pos.Mark != null) pos.Mark.Tag = null;
-            foreach (var course in _courseLines)
-                if (course.Line != null) course.Line.Tag = null;
+            ClearMap();
+        }
+
+        private void SelectMapOnClick(object sender, RoutedEventArgs e) {
+            SelectMap();
+        }
+
+        private void SelectMap() {
+            var dialog = new MapSelectionWindow(MapsDir) {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (dialog.ShowDialog() != true || dialog.SelectedMapPath == null)
+                return;
+
+            string selectedPath = dialog.SelectedMapPath;
+
+            try {
+                ClearMap();
+                LoadPdfMap(selectedPath);
+                ResizeMapToMainWindow();
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się wczytać mapy \"{Path.GetFileName(selectedPath)}\":\n{ex.Message}",
+                    "Błąd wczytywania mapy",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearMap() {
+            foreach (var pos in _positions) {
+                if (pos.Mark != null) {
+                    pos.Mark.Tag = null;
+                    MapCanvas.Children.Remove(pos.Mark);
+                }
+            }
+            foreach (var course in _courseLines) {
+                if (course.Line != null) {
+                    course.Line.Tag = null;
+                    MapCanvas.Children.Remove(course.Line);
+                }
+            }
+            foreach (var triangle in _navTriangles) {
+                MapCanvas.Children.Remove(triangle);
+            }
 
             _positions.Clear();
             _courseLines.Clear();
-
-            MapCanvas.Children.Clear();
-            MapImage.Source = null;
+            _navTriangles.Clear();
 
             _selectedPosition = null;
             _selectedCourseLine = null;
             _currentLine = null;
             _startPosition = null;
+            _isDrawingLine = false;
+            _isMarkMode = false;
+            _isCourseMode = false;
+
+            MapImage.Source = null;
+            MapScale.ScaleX = 1;
+            MapScale.ScaleY = 1;
+            MapCanvas.Width = 0;
+            MapCanvas.Height = 0;
+            MapImage.Width = 0;
+            MapImage.Height = 0;
+            _currentMapPath = string.Empty;
 
             MapCanvas.UpdateLayout();
         }
@@ -600,21 +670,11 @@ namespace marine_nav_trainer.Map {
         }
 
         public void Dispose() {
-            foreach (var pos in _positions)
-                if (pos.Mark != null) pos.Mark.Tag = null;
-            foreach (var course in _courseLines)
-                if (course.Line != null) course.Line.Tag = null;
+            if (_disposed)
+                return;
+            _disposed = true;
 
-            _positions.Clear();
-            _courseLines.Clear();
-
-            MapCanvas.Children.Clear();
-            MapImage.Source = null;
-
-            _selectedPosition = null;
-            _selectedCourseLine = null;
-            _currentLine = null;
-            _startPosition = null;
+            ClearMap();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using marine_nav_trainer.Map;
 using marine_nav_trainer.Windows.Views;
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
@@ -26,6 +27,9 @@ namespace marine_nav_trainer {
                     case "solveExercise":
                         SolveExercise();
                         break;
+                    case "fileList":
+                        OpenFileList();
+                        break;
                 }
             }
         }
@@ -33,6 +37,7 @@ namespace marine_nav_trainer {
         private void CreateExercise() {
             DisposeCurrentContent();
             _taskCreatorView = new TaskCreatorView();
+            _taskCreatorView.CloseRequested += (_, _) => DisposeCurrentContent();
             MainContent.Content = _taskCreatorView;
         }
 
@@ -43,6 +48,13 @@ namespace marine_nav_trainer {
         private void SolveExercise() {
             DisposeCurrentContent();
             MainContent.Content = new MapView();
+        }
+
+        private void OpenFileList() {
+            DisposeCurrentContent();
+            var view = new FileListView();
+            view.CloseRequested += (_, _) => DisposeCurrentContent();
+            MainContent.Content = view;
         }
 
         private void DisposeCurrentContent() {

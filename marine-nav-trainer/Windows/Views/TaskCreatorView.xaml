@@ -1,25 +1,53 @@
 ﻿<UserControl x:Class="marine_nav_trainer.Windows.Views.TaskCreatorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:marine_nav_trainer.Windows.Views"
              xmlns:map="clr-namespace:marine_nav_trainer.Map"
              xmlns:calculator="clr-namespace:marine_nav_trainer.Calculators.UI.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="1920">
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             d:DesignHeight="1000" d:DesignWidth="1920">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0">
-            <calculator:CalculatorView x:Name="CalculatorViewControl"/>
-        </Grid>
+        <Border Grid.Row="0" Padding="15,10,15,10"
+                BorderThickness="0,1,0,1"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="CompassNorthwest24" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <ui:TextBlock Text="Nowe zadanie nawigacyjne" FontTypography="Subtitle" VerticalAlignment="Center"/>
+                </StackPanel>
+                <ui:Button x:Name="CloseButton"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Appearance="Secondary"
+                           ToolTip="Zamknij"
+                           Click="CloseButton_Click"
+                           Padding="8">
+                    <ui:SymbolIcon Symbol="Dismiss24"/>
+                </ui:Button>
+            </Grid>
+        </Border>
 
-        <Grid Grid.Column="1">
-            <map:MapView x:Name="MapViewControl"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <calculator:CalculatorView x:Name="CalculatorViewControl"/>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <map:MapView x:Name="MapViewControl"/>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

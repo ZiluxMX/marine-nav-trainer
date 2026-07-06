@@ -40,6 +40,8 @@
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>
 
+                    <ui:NavigationViewItem Content="Pliki" Tag="fileList" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+
                     <ui:NavigationViewItem Content="Pomoc">
                         <ui:NavigationViewItem.MenuItems>
                             <ui:NavigationViewItem Content="O programie" Tag="closeFrame" PreviewMouseLeftButtonUp="NavItemOnClick"/>

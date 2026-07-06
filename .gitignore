@@ -399,3 +399,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+
+/Assets/Jsons/*
+!/Assets/Jsons/.gitkeep
+/Assets/Maps/*
+!/Assets/Maps/.gitkeep

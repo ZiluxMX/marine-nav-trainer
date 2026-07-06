@@ -4,8 +4,10 @@ using System.Windows.Input;
 using Wpf.Ui.Controls;
 
 namespace marine_nav_trainer.Calculators.UI.Views {
-    public partial class CalculatorView : UserControl {
+    public partial class CalculatorView : UserControl, IDisposable {
         private readonly Dictionary<string, UserControl> _viewCache = [];
+        private bool _disposed;
+
         public CalculatorView() {
             InitializeComponent();
             CalculatorContent.Content = GetView("apparentWind");
@@ -30,6 +32,20 @@ namespace marine_nav_trainer.Calculators.UI.Views {
                 _viewCache[key] = view;
             }
             return view;
+        }
+
+        public void Dispose() {
+            if (_disposed)
+                return;
+            _disposed = true;
+
+            CalculatorContent.Content = null;
+
+            foreach (var view in _viewCache.Values)
+                if (view is IDisposable disposable)
+                    disposable.Dispose();
+
+            _viewCache.Clear();
         }
     }
 }

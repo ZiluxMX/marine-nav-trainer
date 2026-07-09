@@ -44,6 +44,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -58,9 +59,21 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Wyszukiwarka map -->
+                    <ui:TextBox x:Name="MapsSearchBox"
+                                Grid.Row="1"
+                                Margin="8,8,8,0"
+                                PlaceholderText="Szukaj mapy po nazwie..."
+                                ClearButtonEnabled="True"
+                                TextChanged="MapsSearchBox_TextChanged">
+                        <ui:TextBox.Icon>
+                            <ui:SymbolIcon Symbol="Search24"/>
+                        </ui:TextBox.Icon>
+                    </ui:TextBox>
+
                     <!-- Lista map -->
                     <ListBox x:Name="MapsListBox"
-                             Grid.Row="1"
+                             Grid.Row="2"
                              Margin="8"
                              BorderThickness="0"
                              Background="Transparent"
@@ -94,7 +107,7 @@
                     </ListBox>
 
                     <!-- Stopka map -->
-                    <Border Grid.Row="2" Padding="10,8"
+                    <Border Grid.Row="3" Padding="10,8"
                             BorderThickness="0,1,0,0"
                             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                         <Grid>
@@ -103,6 +116,12 @@
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                        FontSize="12"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ui:Button Margin="0,0,8,0"
+                                           Appearance="Danger"
+                                           ToolTip="Usuń zaznaczoną mapę"
+                                           Click="DeleteMap_Click">
+                                    <ui:SymbolIcon Symbol="Delete24"/>
+                                </ui:Button>
                                 <ui:Button Content="Eksportuj"
                                            Margin="0,0,8,0"
                                            Appearance="Secondary"
@@ -129,6 +148,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -143,9 +163,21 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Wyszukiwarka zadań -->
+                    <ui:TextBox x:Name="JsonsSearchBox"
+                                Grid.Row="1"
+                                Margin="8,8,8,0"
+                                PlaceholderText="Szukaj zadania po nazwie..."
+                                ClearButtonEnabled="True"
+                                TextChanged="JsonsSearchBox_TextChanged">
+                        <ui:TextBox.Icon>
+                            <ui:SymbolIcon Symbol="Search24"/>
+                        </ui:TextBox.Icon>
+                    </ui:TextBox>
+
                     <!-- Lista plików zadania -->
                     <ListBox x:Name="JsonsListBox"
-                             Grid.Row="1"
+                             Grid.Row="2"
                              Margin="8"
                              BorderThickness="0"
                              Background="Transparent"
@@ -179,7 +211,7 @@
                     </ListBox>
 
                     <!-- Stopka zadań -->
-                    <Border Grid.Row="2" Padding="10,8"
+                    <Border Grid.Row="3" Padding="10,8"
                             BorderThickness="0,1,0,0"
                             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                         <Grid>
@@ -188,6 +220,12 @@
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                        FontSize="12"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ui:Button Margin="0,0,8,0"
+                                           Appearance="Danger"
+                                           ToolTip="Usuń zaznaczone zadanie"
+                                           Click="DeleteJson_Click">
+                                    <ui:SymbolIcon Symbol="Delete24"/>
+                                </ui:Button>
                                 <ui:Button Content="Eksportuj"
                                            Margin="0,0,8,0"
                                            Appearance="Secondary"

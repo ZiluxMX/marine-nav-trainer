@@ -35,7 +35,6 @@
                     <ui:NavigationViewItem Content="Zadania nawigacyjne">
                         <ui:NavigationViewItem.MenuItems >
                             <ui:NavigationViewItem Content="Utwórz nowe zadanie" Tag="createExercise" PreviewMouseLeftButtonUp="NavItemOnClick"  MinWidth="180"/>
-                            <ui:NavigationViewItem Content="Lista zadań" />
                             <ui:NavigationViewItem Content="Rozwiąż zadanie" Tag="solveExercise" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>

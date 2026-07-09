@@ -12,6 +12,9 @@ namespace marine_nav_trainer.Windows.Views {
         private static readonly string MapsDir = Path.Combine(AssetsBase, "Maps");
         private static readonly string JsonsDir = Path.Combine(AssetsBase, "Jsons");
 
+        private List<FileEntry> _allMaps = new();
+        private List<FileEntry> _allJsons = new();
+
         public event EventHandler? CloseRequested;
 
         public FileListView() {
@@ -26,22 +29,50 @@ namespace marine_nav_trainer.Windows.Views {
         }
 
         public void Refresh() {
-            LoadFiles(MapsDir, "*.pdf", MapsListBox, MapsCountLabel);
-            LoadFiles(JsonsDir, "*.json", JsonsListBox, JsonsCountLabel);
+            _allMaps = LoadEntries(MapsDir, "*.pdf");
+            _allJsons = LoadEntries(JsonsDir, "*.json");
+            ApplyMapsFilter();
+            ApplyJsonsFilter();
         }
 
-        private static void LoadFiles(string dir, string pattern, ListBox listBox, TextBlock countLabel) {
-            var items = Directory.EnumerateFiles(dir, pattern)
+        private static List<FileEntry> LoadEntries(string dir, string pattern) =>
+            Directory.EnumerateFiles(dir, pattern)
                 .Select(path => new FileEntry(path))
                 .OrderBy(f => f.Name)
                 .ToList();
 
+        private void ApplyMapsFilter() =>
+            ApplyFilter(_allMaps, MapsSearchBox.Text, MapsListBox, MapsCountLabel);
+
+        private void ApplyJsonsFilter() =>
+            ApplyFilter(_allJsons, JsonsSearchBox.Text, JsonsListBox, JsonsCountLabel);
+
+        private static void ApplyFilter(List<FileEntry> all, string? search, ListBox listBox, TextBlock countLabel) {
+            search = search?.Trim() ?? string.Empty;
+            bool isFiltering = search.Length > 0;
+
+            var items = isFiltering
+                ? all.Where(f => f.Name.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList()
+                : all;
+
             listBox.ItemsSource = items;
-            countLabel.Text = items.Count switch {
-                0 => "Brak plików",
-                1 => "1 plik",
-                _ => $"{items.Count} pliki/plików"
-            };
+
+            if (isFiltering)
+                countLabel.Text = $"{items.Count} z {all.Count}";
+            else
+                countLabel.Text = all.Count switch {
+                    0 => "Brak plików",
+                    1 => "1 plik",
+                    _ => $"{all.Count} pliki/plików"
+                };
+        }
+
+        private void MapsSearchBox_TextChanged(object sender, TextChangedEventArgs e) {
+            if (IsInitialized) ApplyMapsFilter();
+        }
+
+        private void JsonsSearchBox_TextChanged(object sender, TextChangedEventArgs e) {
+            if (IsInitialized) ApplyJsonsFilter();
         }
 
         private void ImportMap_Click(object sender, RoutedEventArgs e) =>
@@ -55,6 +86,40 @@ namespace marine_nav_trainer.Windows.Views {
 
         private void ExportJson_Click(object sender, RoutedEventArgs e) =>
             ExportFile(JsonsListBox, "Pliki zadań (*.json)|*.json");
+
+        private void DeleteMap_Click(object sender, RoutedEventArgs e) =>
+            DeleteFile(MapsListBox, "mapę");
+
+        private void DeleteJson_Click(object sender, RoutedEventArgs e) =>
+            DeleteFile(JsonsListBox, "zadanie");
+
+        private void DeleteFile(ListBox listBox, string what) {
+            if (listBox.SelectedItem is not FileEntry entry) {
+                MessageBox.Show($"Zaznacz {what} do usunięcia.", "Nie zaznaczono pliku",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Czy na pewno usunąć plik \"{entry.Name}\"?\nTej operacji nie można cofnąć.",
+                "Potwierdź usunięcie",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            try {
+                File.Delete(entry.FullPath);
+            }
+            catch (Exception ex) {
+                MessageBox.Show($"Nie udało się usunąć pliku:\n{ex.Message}", "Błąd usuwania",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            Refresh();
+        }
 
         private void ExportFile(ListBox listBox, string filter) {
             if (listBox.SelectedItem is not FileEntry entry) {

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using marine_nav_trainer.Map.Models;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -7,6 +8,7 @@ using Point = System.Windows.Point;
 
 namespace marine_nav_trainer.Map.UI.Controls {
     internal class NavTriangle : Canvas {
+        public const double PointSnapRadius = 20;
         public double AngleMain { get; private set; }
         public double AngleRed { get; private set; }
         private readonly double _size;
@@ -229,7 +231,147 @@ namespace marine_nav_trainer.Map.UI.Controls {
             Children.Add(_rotationHandle);
         }
 
-        //////////    
+        // Kolizja
+
+        // Zwraca 3 wierzchołki trójkąta        
+        public Point[] GetTriangleWorldPoints()
+            => GetTriangleWorldPoints(Canvas.GetLeft(this), Canvas.GetTop(this), _rotateTransform.Angle);
+
+        public Point[] GetTriangleWorldPoints(double left, double top, double angleDeg) {
+            if (double.IsNaN(left)) left = 0;
+            if (double.IsNaN(top)) top = 0;
+
+            Point[] local = {
+                new Point(0, _size),
+                new Point(_size, _size),
+                new Point(0, 0)
+            };
+
+            double rad = angleDeg * Math.PI / 180.0;
+            double cos = Math.Cos(rad);
+            double sin = Math.Sin(rad);
+
+            var result = new Point[local.Length];
+            for (int i = 0; i < local.Length; i++) {
+                double px = local[i].X - _center;
+                double py = local[i].Y - _center;
+                double rx = px * cos - py * sin;
+                double ry = px * sin + py * cos;
+                result[i] = new Point(left + _center + rx, top + _center + ry);
+            }
+            return result;
+        }
+
+        // Czy trójkąt w zadanej pozycji/obrocie najedzie na inny trójkąt
+        private bool CollidesWithSiblings(double left, double top, double angleDeg) {
+            var parent = Parent as Canvas;
+            if (parent == null) return false;
+
+            Point[] mine = GetTriangleWorldPoints(left, top, angleDeg);
+            foreach (var child in parent.Children) {
+                if (child is NavTriangle other &&
+                    !ReferenceEquals(other, this) &&
+                    other.Visibility == Visibility.Visible) {
+                    if (TrianglesOverlap(mine, other.GetTriangleWorldPoints()))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool TrianglesOverlap(Point[] a, Point[] b)
+            => !HasSeparatingAxis(a, b) && !HasSeparatingAxis(b, a);
+
+        private static bool HasSeparatingAxis(Point[] poly, Point[] other) {
+            for (int i = 0; i < poly.Length; i++) {
+                Point p1 = poly[i];
+                Point p2 = poly[(i + 1) % poly.Length];
+                var axis = new Vector(-(p2.Y - p1.Y), p2.X - p1.X);
+
+                Project(poly, axis, out double minA, out double maxA);
+                Project(other, axis, out double minB, out double maxB);
+
+                if (maxA <= minB || maxB <= minA)
+                    return true;
+            }
+            return false;
+        }
+
+        private static void Project(Point[] poly, Vector axis, out double min, out double max) {
+            min = max = axis.X * poly[0].X + axis.Y * poly[0].Y;
+            for (int i = 1; i < poly.Length; i++) {
+                double d = axis.X * poly[i].X + axis.Y * poly[i].Y;
+                if (d < min) min = d;
+                else if (d > max) max = d;
+            }
+        }
+
+        // Przyciaganie trójkata do punktu
+        private bool TrySnapHypotenuseToPoint(ref double left, ref double top, double angleDeg) {
+            var parent = Parent as Canvas;
+            if (parent == null) return false;
+
+            Point[] tri = GetTriangleWorldPoints(left, top, angleDeg);
+            Point a = tri[2]; // (0, 0)      — koniec przeciwprostokątnej
+            Point b = tri[1]; // (size,size) — koniec przeciwprostokątnej
+
+            Vector dir = b - a;
+            double length = dir.Length;
+            if (length < 1e-6) return false;
+            dir /= length;
+            var normal = new Vector(-dir.Y, dir.X);
+
+            double bestAbsDist = double.MaxValue;
+            double bestSigned = 0;
+            bool found = false;
+
+            foreach (var child in parent.Children) {
+                if (child is PositionMark mark && mark.Tag is Position pos) {
+                    var p = new Point(pos.X, pos.Y);
+                    double along = (p - a) * dir;
+                    if (along < 0 || along > length) continue; // rzut poza przeciwprostokątną
+
+                    double signed = (p - a) * normal;
+                    double absDist = Math.Abs(signed);
+                    if (absDist <= PointSnapRadius && absDist < bestAbsDist) {
+                        bestAbsDist = absDist;
+                        bestSigned = signed;
+                        found = true;
+                    }
+                }
+            }
+
+            if (!found) return false;
+
+            left += bestSigned * normal.X;
+            top += bestSigned * normal.Y;
+            return true;
+        }
+
+        // Czy przeciwprostokątna aktualnie przylega do zadanego punktu
+        public bool IsAttachedToPoint(Point p, out Vector direction) {
+            // + Zwraca wektor kierunku przeciwprostokątnej
+            direction = new Vector(0, 0);
+
+            Point[] tri = GetTriangleWorldPoints();
+            Point a = tri[2]; // (0, 0)
+            Point b = tri[1]; // (size, size)
+
+            Vector dir = b - a;
+            double length = dir.Length;
+            if (length < 1e-6) return false;
+            dir /= length;
+            var normal = new Vector(-dir.Y, dir.X);
+
+            double along = (p - a) * dir;
+            if (along < 0 || along > length) return false;                   // punkt poza krawędzią
+            if (Math.Abs((p - a) * normal) > PointSnapRadius) return false;  // krawędź nie przylega
+
+            direction = dir;
+            return true;
+        }
+
+        // Movement
         private void Handle_MouseLeftButtonDown(object sender, MouseButtonEventArgs mouse) {
             _isDragging = true;
             var parent = Parent as Canvas;
@@ -252,14 +394,33 @@ namespace marine_nav_trainer.Map.UI.Controls {
             double dx = current.X - _dragStartMouse.X;
             double dy = current.Y - _dragStartMouse.Y;
 
-            Canvas.SetLeft(this, _dragStartElement.X + dx);
-            Canvas.SetTop(this, _dragStartElement.Y + dy);
+            double targetLeft = _dragStartElement.X + dx;
+            double targetTop = _dragStartElement.Y + dy;
+            double curLeft = Canvas.GetLeft(this);
+            double curTop = Canvas.GetTop(this);
+            double angle = _rotateTransform.Angle;
+
+            // Przyciąganie do punktu
+            bool snapped = TrySnapHypotenuseToPoint(ref targetLeft, ref targetTop, angle);
+
+            if (!CollidesWithSiblings(targetLeft, targetTop, angle)) {
+                Canvas.SetLeft(this, targetLeft);
+                Canvas.SetTop(this, targetTop);
+            }
+            else if (!snapped && !CollidesWithSiblings(targetLeft, curTop, angle)) {
+                // ruch wzdłuż osi X, gdy oś Y jest zablokowana
+                Canvas.SetLeft(this, targetLeft);
+            }
+            else if (!snapped && !CollidesWithSiblings(curLeft, targetTop, angle)) {
+                // ruch wzdłuż osi Y, gdy oś X jest zablokowana
+                Canvas.SetTop(this, targetTop);
+            }
+            // przyklejony/kolizja/zablokowany -> brak ruchu
         }
         private void Handle_MouseLeftButtonUp(object sender, MouseButtonEventArgs mousee) {
             _isDragging = false;
             _handleLine?.ReleaseMouseCapture();
         }
-        //////////       
         private void RotationHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs mouse) {
             _isRotating = true;
             (sender as UIElement)?.CaptureMouse();
@@ -286,6 +447,11 @@ namespace marine_nav_trainer.Map.UI.Controls {
             double realAngle = (angle + 135) % 360;
             double realAngleRed = (realAngle + 180) % 360;
             //Debug.WriteLine($"angle={angle}; oblicz={realAngle}; oblicz RED={realAngleRed}");
+
+            // odrzuć rotacje, jak najedzie na inny trójkąt
+            if (CollidesWithSiblings(left, top, angle))
+                return;
+
             AngleMain = realAngle;
             AngleRed = realAngleRed;
 

@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
-             MinWidth="500"
-             d:DesignHeight="550" Width="500">
+             MaxWidth="400"
+             d:DesignHeight="550" Width="400">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,20,24,24">
 

@@ -43,6 +43,8 @@ namespace marine_nav_trainer.Map {
         private bool _isMarkMode = false;
         private bool _isCourseMode = false;
         private bool _isDrawingLine = false;
+        private bool _courseDirectionLocked = false;
+        private Vector _courseDirection;
         private Position? _startPosition = null;
         private Position? _selectedPosition = null;
         private CourseLine? _selectedCourseLine = null;
@@ -53,8 +55,7 @@ namespace marine_nav_trainer.Map {
         private bool _disposed;
 
 
-        // --sekcja TEMP <- JSON
-        private const string DefaultMapFile = "Elblad_Podejscie.pdf";//Elblad_Podejscie  Kart-312-3-2021
+        // --sekcja TEMP <- JSON        
         private const double LatTop = 71.333333;
         private const double LatBottom = 69.000000;
         private const double LonLeft = 12.000000;
@@ -65,17 +66,19 @@ namespace marine_nav_trainer.Map {
             Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
             "Assets"
         );
+        private const string DefaultMapFile = "DefaultSeaMap.pdf";
+        private static readonly string BackgroundDir = Path.Combine(AssetsBase, "Backgrounds");
         private static readonly string MapsDir = Path.Combine(AssetsBase, "Maps");
 
         public MapView() {
             InitializeComponent();
-            //LoadPdfMap(Path.Combine(MapsDir, DefaultMapFile));
+            LoadPdfMap(Path.Combine(BackgroundDir, DefaultMapFile), true);
             Dispatcher.InvokeAsync(() => {
                 ResizeMapToMainWindow();
             }, Threading.DispatcherPriority.Loaded);
         }
 
-        private void LoadPdfMap(string pdfPath) {
+        private void LoadPdfMap(string pdfPath, bool IsDefaultMap = false) {
             using var document = PdfDocument.Load(pdfPath);
             int pageIndex = 0;
             int dpi = 300; //400
@@ -106,7 +109,7 @@ namespace marine_nav_trainer.Map {
 
             //Debug.WriteLine($"Height={height}  Width={width}");
 
-            InitCalibrationEdges();
+            InitCalibrationEdges(!IsDefaultMap);
         }
 
         private WriteableBitmap ConvertToWriteableBitmap(Bitmap bitmap) {
@@ -134,29 +137,33 @@ namespace marine_nav_trainer.Map {
             }
         }
 
-        private void InitCalibrationEdges() {
+        private void InitCalibrationEdges(bool IsEdgesVisible) {
+            const double margin = 100;
             double w = MapCanvas.Width;
             double h = MapCanvas.Height;
 
-            _edgesVisible = true;
-            LeftEdge.Visibility = Visibility.Visible;
-            RightEdge.Visibility = Visibility.Visible;
-            TopEdge.Visibility = Visibility.Visible;
-            BottomEdge.Visibility = Visibility.Visible;
+            _edgesVisible = IsEdgesVisible;
+            ToggleEdgesButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                         : Wpf.Ui.Controls.ControlAppearance.Secondary;
+            var isVisible = _edgesVisible ? Visibility.Visible : Visibility.Collapsed;
+            LeftEdge.Visibility = isVisible;
+            RightEdge.Visibility = isVisible;
+            TopEdge.Visibility = isVisible;
+            BottomEdge.Visibility = isVisible;
 
-            LeftEdge.X1 = LeftEdge.X2 = 0;
+            LeftEdge.X1 = LeftEdge.X2 = margin;
             LeftEdge.Y1 = 0;
             LeftEdge.Y2 = h;
 
-            RightEdge.X1 = RightEdge.X2 = w;
+            RightEdge.X1 = RightEdge.X2 = w - margin;
             RightEdge.Y1 = 0;
             RightEdge.Y2 = h;
 
-            TopEdge.Y1 = TopEdge.Y2 = 0;
+            TopEdge.Y1 = TopEdge.Y2 = margin;
             TopEdge.X1 = 0;
             TopEdge.X2 = w;
 
-            BottomEdge.Y1 = BottomEdge.Y2 = h;
+            BottomEdge.Y1 = BottomEdge.Y2 = h - margin;
             BottomEdge.X1 = 0;
             BottomEdge.X2 = w;
         }
@@ -255,10 +262,12 @@ namespace marine_nav_trainer.Map {
             if (_selectedPosition != null) {
                 _selectedPosition.Mark.Color = Brushes.Blue;
                 _selectedPosition = null;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             }
             if (_selectedCourseLine != null) {
                 _selectedCourseLine.Line.Stroke = Brushes.Blue;
                 _selectedCourseLine = null;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             }
         }
 
@@ -267,12 +276,14 @@ namespace marine_nav_trainer.Map {
             if (markPos != null) {
                 markPos.Mark.Color = Brushes.Orange;
                 _selectedPosition = markPos;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Caution;
                 return true;
             }
             CourseLine? markCourse = GetCourseFromSource(mouse.OriginalSource);
             if (markCourse != null) {
                 markCourse.Line.Stroke = Brushes.Orange;
                 _selectedCourseLine = markCourse;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Caution;
                 return true;
             }
             return false;
@@ -297,6 +308,8 @@ namespace marine_nav_trainer.Map {
             }
             if (_isDrawingLine && _currentLine != null) {
                 Point pos = mouse.GetPosition(MapCanvas);
+                if (_courseDirectionLocked)
+                    pos = ProjectOntoCourseDirection(_currentLine, pos);
                 _currentLine.X2 = pos.X;
                 _currentLine.Y2 = pos.Y;
             }
@@ -375,6 +388,7 @@ namespace marine_nav_trainer.Map {
 
             MapCanvas.Children.Add(mark);
             _isMarkMode = false;
+            SetMarkButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
 
             var geo = PixelToGeoCalibrated(pos.X, pos.Y);
             var markPos = new Position {
@@ -404,6 +418,16 @@ namespace marine_nav_trainer.Map {
                 _isDrawingLine = true;
                 _startPosition = markPos;
 
+                _courseDirectionLocked = false;
+                foreach (var triangle in _navTriangles) {
+                    if (triangle.Visibility == Visibility.Visible &&
+                        triangle.IsAttachedToPoint(new Point(markPos.X, markPos.Y), out Vector dir)) {
+                        _courseDirection = dir;
+                        _courseDirectionLocked = true;
+                        break;
+                    }
+                }
+
                 _currentLine = new Line {
                     X1 = markPos.X,
                     Y1 = markPos.Y,
@@ -421,6 +445,8 @@ namespace marine_nav_trainer.Map {
                 if (markPos == null) {
                     Point pos = mouse.GetPosition(MapCanvas);
                     if (_currentLine != null && _startPosition != null) {
+                        if (_courseDirectionLocked)
+                            pos = ProjectOntoCourseDirection(_currentLine, pos);
                         _currentLine.X2 = pos.X;
                         _currentLine.Y2 = pos.Y;
                         isCourseComplete = true;
@@ -453,15 +479,29 @@ namespace marine_nav_trainer.Map {
                     _nextIdCourse++;
                     _currentLine.IsHitTestVisible = true;
                 }
+                SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
                 _isCourseMode = false;
                 _currentLine = null;
                 _startPosition = null;
+                _courseDirectionLocked = false;
             }
+        }
+
+        // Rysowanie lini po wektorze przyległego trójkąta
+        private Point ProjectOntoCourseDirection(Line line, Point mousePos) {
+            var start = new Point(line.X1, line.Y1);
+            Vector toMouse = mousePos - start;
+            double t = toMouse.X * _courseDirection.X + toMouse.Y * _courseDirection.Y;
+            return new Point(
+                start.X + _courseDirection.X * t,
+                start.Y + _courseDirection.Y * t);
         }
 
         // Panel sterowania
         private void ToggleCalibrationLines() {
             _edgesVisible = !_edgesVisible;
+            ToggleEdgesButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                         : Wpf.Ui.Controls.ControlAppearance.Secondary;
             var isVisible = _edgesVisible ? Visibility.Visible : Visibility.Collapsed;
 
             LeftEdge.Visibility = isVisible;
@@ -487,12 +527,34 @@ namespace marine_nav_trainer.Map {
         }
 
         private void ToggleNavTriangles() {
+            if (_navTriangles.Count > 0) {
+                bool anyVisible = _navTriangles[0].Visibility == Visibility.Visible;
+                var newVisibility = anyVisible ? Visibility.Collapsed : Visibility.Visible;
+                foreach (var navTriangle in _navTriangles)
+                    navTriangle.Visibility = newVisibility;
+                ToggleNavTrianglesButton.Appearance = anyVisible ? Wpf.Ui.Controls.ControlAppearance.Secondary
+                                                         : Wpf.Ui.Controls.ControlAppearance.Info;
+                return;
+            }
             double size = 1300;
             var triangle = new NavTriangle(size);
 
+            ToggleNavTrianglesButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Info;
+
             Point center = GetVisibleCenter();
             double centerX = center.X - size / 2;
-            double centerY = center.Y - size / 2;
+            double centerY = center.Y - (1.6 * size) / 2;
+
+            Canvas.SetLeft(triangle, centerX);
+            Canvas.SetTop(triangle, centerY);
+
+            _navTriangles.Add(triangle);
+            MapCanvas.Children.Add(triangle);
+
+            triangle = new NavTriangle(size);
+
+            centerX = center.X - size / 2;
+            centerY = center.Y + (0.6 * size) / 2;
 
             Canvas.SetLeft(triangle, centerX);
             Canvas.SetTop(triangle, centerY);
@@ -512,12 +574,20 @@ namespace marine_nav_trainer.Map {
         }
         private void SetMarkOnClick(object sender, RoutedEventArgs e) {
             _isMarkMode = !_isMarkMode;
+            if (_isCourseMode)
+                SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             _isCourseMode = false;
+            SetMarkButton.Appearance = _isMarkMode ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                   : Wpf.Ui.Controls.ControlAppearance.Secondary;
             ClearSelected();
         }
         private void SetCourseOnClick(object sender, RoutedEventArgs e) {
             _isCourseMode = !_isCourseMode;
+            if (_isMarkMode)
+                SetMarkButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             _isMarkMode = false;
+            SetCourseButton.Appearance = _isCourseMode ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                       : Wpf.Ui.Controls.ControlAppearance.Secondary;
             ClearSelected();
         }
         private void DeleteSelectedOnClick(object sender, RoutedEventArgs e) {
@@ -544,7 +614,7 @@ namespace marine_nav_trainer.Map {
                 return;
 
             string selectedPath = dialog.SelectedMapPath;
-
+            SelectMapButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             try {
                 ClearMap();
                 LoadPdfMap(selectedPath);
@@ -575,6 +645,8 @@ namespace marine_nav_trainer.Map {
             foreach (var triangle in _navTriangles) {
                 MapCanvas.Children.Remove(triangle);
             }
+            if (_edgesVisible)
+                ToggleCalibrationLines();
 
             _positions.Clear();
             _courseLines.Clear();
@@ -585,6 +657,7 @@ namespace marine_nav_trainer.Map {
             _currentLine = null;
             _startPosition = null;
             _isDrawingLine = false;
+            _courseDirectionLocked = false;
             _isMarkMode = false;
             _isCourseMode = false;
 
@@ -654,7 +727,7 @@ namespace marine_nav_trainer.Map {
                 _positions.Remove(_selectedPosition);
                 _selectedPosition.Mark = null;
                 _selectedPosition = null;
-
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
                 return;
             }
             if (_selectedCourseLine != null) {
@@ -664,7 +737,7 @@ namespace marine_nav_trainer.Map {
                 _courseLines.Remove(_selectedCourseLine);
                 _selectedCourseLine.Line = null;
                 _selectedCourseLine = null;
-
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
                 return;
             }
         }

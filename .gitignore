@@ -401,7 +401,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 
-/Assets/Jsons/*
-!/Assets/Jsons/.gitkeep
-/Assets/Maps/*
-!/Assets/Maps/.gitkeep
+/marine-nav-trainer/Assets/Jsons/*
+!/marine-nav-trainer/Assets/Jsons/.gitkeep
+/marine-nav-trainer/Assets/Maps/*
+!/marine-nav-trainer/Assets/Maps/.gitkeep

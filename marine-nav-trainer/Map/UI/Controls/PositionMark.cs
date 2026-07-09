@@ -19,7 +19,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             double lineThickness = 6;
             double lineGap = -1;
             double lineLength = 6;
-            double dotSize = 7;
+            double dotSize = 5;
 
             _ring = new Ellipse {
                 Width = size,

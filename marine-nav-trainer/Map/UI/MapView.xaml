@@ -26,43 +26,58 @@
                             VerticalAlignment="Center">
 
                     <ui:TextBlock Text="Panel sterowania"                              
-                                  FontSize="16"                                           
+                                  FontSize="16"                   
                                   VerticalAlignment="Center"      
                                   Margin="4,0,4,0"/>
 
-                    <ui:Button Content="Linie pomocnicze"
+                    <ui:Button x:Name="ToggleEdgesButton"
+                               Content="Krawędzie mapy"
                                Margin="4,0,4,0"
+                               Appearance="Info"
                                Click="ToggleEdgesOnClick"/>
 
-                    <ui:Button Content="Resize map"
+                    <ui:Button Content="Resetuj przybliżenie"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="ResizeMapOnClick"/>
-
-                    <ui:Button Content="Motyw"
+                    <!-- 
+                        <ui:Button Content="Motyw"
                                Margin="4,0,4,0"
                                Click="ToggleThermeOnClick"/>
-
-                    <ui:Button Content="Set Mark"
+                    -->
+                    <ui:Button x:Name="SetMarkButton"
+                               Content="Wstaw punkt"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="SetMarkOnClick"/>
 
-                    <ui:Button Content="Set course"
+                    <ui:Button x:Name="SetCourseButton"
+                               Content="Wstaw linię kursu"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="SetCourseOnClick"/>
 
-                    <ui:Button Content="Usuń zaznaczone"
+                    <ui:Button x:Name="DeleteSelectedButton"
+                               Content="Usuń zaznaczone"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="DeleteSelectedOnClick"/>
 
-                    <ui:Button Content="Trójkąty"
+                    <ui:Button x:Name="ToggleNavTrianglesButton"
+                               Content="Trójkąty"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="ToggleNavTrianglesOnClick"/>
-
+                    <!--
                     <ui:Button Content="Czyść mapę"
                                Margin="4,0,4,0"
+                               Appearance="Secondary"
                                Click="ClearOnClick"/>
-                    <ui:Button Content="Wybierz mapę"
+                    -->
+                    <ui:Button x:Name="SelectMapButton"
+                               Content="Wybierz mapę"
                                Margin="4,0,4,0"
+                               Appearance="Danger"
                                Click="SelectMapOnClick"/>
                 </StackPanel>
 

@@ -62,13 +62,9 @@ namespace marine_nav_trainer.Map {
         private const double LonRight = 21.000000;
         // -- koniec sekcji TEMP
 
-        private static readonly string AssetsBase = Path.Combine(
-            Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
-            "Assets"
-        );
         private const string DefaultMapFile = "DefaultSeaMap.pdf";
-        private static readonly string BackgroundDir = Path.Combine(AssetsBase, "Backgrounds");
-        private static readonly string MapsDir = Path.Combine(AssetsBase, "Maps");
+        private static readonly string BackgroundDir = AppPaths.BackgroundDir;
+        private static readonly string MapsDir = AppPaths.MapsDir;
 
         public MapView() {
             InitializeComponent();

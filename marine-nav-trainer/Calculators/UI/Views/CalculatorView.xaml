@@ -17,13 +17,13 @@
                 <Border Grid.Column="0"
                         BorderThickness="1,1,1,1"
                         BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
-                    <ui:NavigationView Grid.Column="0" IsBackButtonVisible="Collapsed" PaneHeader="Kalkulatory" MaxWidth="210" MinHeight="450">
+                    <ui:NavigationView Grid.Column="0" IsBackButtonVisible="Collapsed" PaneHeader="Kalkulatory" MaxWidth="195" MinHeight="450">
                         <ui:NavigationView.MenuItems>
-                            <ui:NavigationViewItem Content="Wiatr pozorny" Tag="apparentWind" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
-                            <ui:NavigationViewItem Content="Trawers" Tag="crossbar" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
-                            <ui:NavigationViewItem Content="Pozycja obserwowana" Tag="observedPosition" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
-                            <ui:NavigationViewItem Content="Przesunięcie LOP" Tag="runningFix" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
-                            <ui:NavigationViewItem Content="Pozycja zliczona" Tag="deadReckoning" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="200"/>
+                            <ui:NavigationViewItem Content="Wiatr pozorny" Tag="apparentWind" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="185"/>
+                            <ui:NavigationViewItem Content="Trawers" Tag="crossbar" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="185"/>
+                            <ui:NavigationViewItem Content="Pozycja obserwowana" Tag="observedPosition" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="185"/>
+                            <ui:NavigationViewItem Content="Przesunięcie LOP" Tag="runningFix" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="185"/>
+                            <ui:NavigationViewItem Content="Pozycja zliczona" Tag="deadReckoning" PreviewMouseLeftButtonUp="NavItemOnClick" HorizontalAlignment="Left" Width="185"/>
                         </ui:NavigationView.MenuItems>
                     </ui:NavigationView>
                 </Border>

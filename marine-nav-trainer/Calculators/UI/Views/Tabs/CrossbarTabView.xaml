@@ -4,82 +4,81 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:controls="clr-namespace:marine_nav_trainer.Calculators.UI.Controls"
              mc:Ignorable="d"
              MaxWidth="400"
              d:DesignHeight="550" Width="400">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="24,20,24,24">
+        <StackPanel Margin="16,12,16,16">
 
             <!-- Punkt do trawersu -->
-            <ui:TextBlock Text="Współrzędne punktu do trawersu" FontTypography="BodyStrong" Margin="0,0,0,10"/>
-            <Grid Margin="0,0,0,20">
+            <ui:TextBlock Text="Współrzędne punktu do trawersu" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+            <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość (°)"/>
-                    <ui:NumberBox x:Name="PoiLat" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
+                    <ui:TextBlock Text="Szerokość"/>
+                    <controls:CoordinateInputBox x:Name="PoiLat"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Długość (°)"/>
-                    <ui:NumberBox x:Name="PoiLon" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
+                    <ui:TextBlock Text="Długość"/>
+                    <controls:CoordinateInputBox x:Name="PoiLon" IsLatitude="False"/>
                 </StackPanel>
             </Grid>
 
             <Separator Margin="0,0,0,5"/>
 
             <!-- Pozycja statku -->
-            <ui:TextBlock Text="Pozycja statku" FontTypography="BodyStrong" Margin="0,0,0,10"/>
-            <Grid Margin="0,0,0,12">
+            <ui:TextBlock Text="Pozycja statku" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+            <Grid Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość (°)"/>
-                    <ui:NumberBox x:Name="PositionLat" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
+                    <ui:TextBlock Text="Szerokość"/>
+                    <controls:CoordinateInputBox x:Name="PositionLat"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Długość (°)"/>
-                    <ui:NumberBox x:Name="PositionLon" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
+                    <ui:TextBlock Text="Długość"/>
+                    <controls:CoordinateInputBox x:Name="PositionLon" IsLatitude="False"/>
                 </StackPanel>
             </Grid>
-            <Grid Margin="0,0,0,20">
+            <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="2">
                     <ui:TextBlock Text="Kurs (KDD) (°)"/>
-                    <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="360"/>
+                    <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                 </StackPanel>
             </Grid>
 
-            <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,20"/>
+            <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
 
             <Separator Margin="0,0,0,5"/>
 
             <!-- Wyniki -->
-            <ui:TextBlock Text="Wyniki - współrzędne trawersu" FontTypography="BodyStrong" Margin="0,0,0,10"/>
+            <ui:TextBlock Text="Wyniki - współrzędne trawersu" FontTypography="BodyStrong" Margin="0,0,0,6"/>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość (°)"/>
-                    <ui:NumberBox x:Name="CrossbarLat" SpinButtonPlacementMode="Hidden" Minimum="-90" Maximum="90"/>
-                    <ui:TextBlock x:Name="CrossbarLatDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                    <ui:TextBlock Text="Szerokość"/>
+                    <controls:CoordinateInputBox x:Name="CrossbarLat"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Długość (°)"/>
-                    <ui:NumberBox x:Name="CrossbarLon" SpinButtonPlacementMode="Hidden" Minimum="-180" Maximum="180"/>
-                    <ui:TextBlock x:Name="CrossbarLonDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                    <ui:TextBlock Text="Długość"/>
+                    <controls:CoordinateInputBox x:Name="CrossbarLon" IsLatitude="False"/>
                 </StackPanel>
             </Grid>
         </StackPanel>

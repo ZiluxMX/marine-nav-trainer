@@ -1,4 +1,3 @@
-using marine_nav_trainer.Calculators.Core;
 using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.Crossbar;
@@ -33,10 +32,7 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             });
 
             CrossbarLat.Value = result.Lat;
-            CrossbarLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
-
             CrossbarLon.Value = result.Lon;
-            CrossbarLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

@@ -179,9 +179,6 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
-# Click-Once directory
-publish/
-
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
@@ -405,3 +402,10 @@ FodyWeavers.xsd
 !/marine-nav-trainer/Assets/Jsons/.gitkeep
 /marine-nav-trainer/Assets/Maps/*
 !/marine-nav-trainer/Assets/Maps/.gitkeep
+
+# Click-Once directory
+publish/
+
+# Inno Setup compiled installer output
+installer/Output/
+installer/old/

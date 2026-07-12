@@ -1,4 +1,3 @@
-using marine_nav_trainer.Calculators.Core;
 using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.RunningFix;
@@ -34,10 +33,7 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             });
 
             ObservedPosLat.Value = result.Lat;
-            ObservedPosLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
-
             ObservedPosLon.Value = result.Lon;
-            ObservedPosLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

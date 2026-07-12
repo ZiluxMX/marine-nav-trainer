@@ -1,4 +1,3 @@
-using marine_nav_trainer.Calculators.Core;
 using marine_nav_trainer.Calculators.Core.Abstractions;
 using marine_nav_trainer.Calculators.Core.Factory;
 using marine_nav_trainer.Calculators.Modules.DeadReckoning;
@@ -30,10 +29,7 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             });
 
             DeadReckoningLat.Value = result.Lat;
-            DeadReckoningLatDegMin.Text = CoordinateFormatter.ToLatDegMin(result.Lat);
-
             DeadReckoningLon.Value = result.Lon;
-            DeadReckoningLonDegMin.Text = CoordinateFormatter.ToLonDegMin(result.Lon);
         }
     }
 }

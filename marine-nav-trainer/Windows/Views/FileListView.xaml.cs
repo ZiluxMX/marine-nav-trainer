@@ -5,12 +5,8 @@ using System.Windows.Controls;
 
 namespace marine_nav_trainer.Windows.Views {
     public partial class FileListView : UserControl {
-        private static readonly string AssetsBase = Path.Combine(
-            Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName,
-            "Assets"
-        );
-        private static readonly string MapsDir = Path.Combine(AssetsBase, "Maps");
-        private static readonly string JsonsDir = Path.Combine(AssetsBase, "Jsons");
+        private static readonly string MapsDir = AppPaths.MapsDir;
+        private static readonly string JsonsDir = AppPaths.JsonsDir;
 
         private List<FileEntry> _allMaps = new();
         private List<FileEntry> _allJsons = new();

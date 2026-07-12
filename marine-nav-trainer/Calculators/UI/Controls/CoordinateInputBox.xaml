@@ -1,0 +1,50 @@
+<UserControl x:Class="marine_nav_trainer.Calculators.UI.Controls.CoordinateInputBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             d:DesignWidth="170">
+    <StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ui:NumberBox x:Name="DecimalBox" Grid.Column="0"
+                          SpinButtonPlacementMode="Hidden"
+                          ClearButtonEnabled="False"
+                          Padding="8,4,8,4"
+                          PlaceholderText="dziesiętnie °"
+                          TextChanged="DecimalBox_TextChanged"/>
+
+            <ComboBox x:Name="CardinalBox" Grid.Column="4"
+                      MinWidth="52"
+                      Padding="8,4,8,4"
+                      SelectionChanged="Cardinal_SelectionChanged"/>
+        </Grid>
+        <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ui:NumberBox x:Name="DegBox" Grid.Column="0"
+                          SpinButtonPlacementMode="Hidden"
+                          ClearButtonEnabled="False"
+                          MaxDecimalPlaces="0"
+                          Padding="8,4,8,4"
+                          PlaceholderText="°"
+                          TextChanged="DegMin_TextChanged"/>
+            <ui:NumberBox x:Name="MinBox" Grid.Column="2"
+                          SpinButtonPlacementMode="Hidden"
+                          ClearButtonEnabled="False"
+                          MaxDecimalPlaces="4"
+                          Padding="8,4,8,4"
+                          PlaceholderText="′"
+                          TextChanged="DegMin_TextChanged"/>
+        </Grid>
+    </StackPanel>
+</UserControl>

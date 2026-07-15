@@ -12,7 +12,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
+        <!-- Panel główny -->
         <ui:Card Grid.Row="0" Padding="8,2,8,2">
             <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -45,29 +45,13 @@
                                Margin="4,0,4,0"
                                Click="ToggleThermeOnClick"/>
                     -->
-                    <ui:Button x:Name="SetMarkButton"
-                               Content="Wstaw punkt"
-                               Margin="4,0,4,0"
-                               Appearance="Secondary"
-                               Click="SetMarkOnClick"/>
-
-                    <ui:Button x:Name="SetCourseButton"
-                               Content="Wstaw linię kursu"
-                               Margin="4,0,4,0"
-                               Appearance="Secondary"
-                               Click="SetCourseOnClick"/>
-
+                    
                     <ui:Button x:Name="DeleteSelectedButton"
                                Content="Usuń zaznaczone"
                                Margin="4,0,4,0"
                                Appearance="Secondary"
                                Click="DeleteSelectedOnClick"/>
-
-                    <ui:Button x:Name="ToggleNavTrianglesButton"
-                               Content="Trójkąty"
-                               Margin="4,0,4,0"
-                               Appearance="Secondary"
-                               Click="ToggleNavTrianglesOnClick"/>
+                    
                     <!--
                     <ui:Button Content="Czyść mapę"
                                Margin="4,0,4,0"
@@ -86,53 +70,110 @@
                 </Border>
             </Grid>
         </ui:Card>
-        <ScrollViewer x:Name="MapScrollViewer"
-                      Grid.Row="1"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto"
-                      PreviewMouseWheel="MapScrollViewer_MouseWheel_Zoom"
-                      CanContentScroll="False">
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <!-- Panel boczny -->
+            <ui:Card Grid.Column="0" 
+                     Padding="8,2,8,2" 
+                     VerticalAlignment="Top"
+                     HorizontalAlignment="Left">
+                <StackPanel Orientation="Vertical" VerticalAlignment="Top">
+                    <ui:Button x:Name="SetMarkButton"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="SetMarkOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="LocationAdd24"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
 
-            <Grid HorizontalAlignment="Center"
-                  VerticalAlignment="Center">
+                    <ui:Button x:Name="SetCourseButton"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="SetCourseOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Line24"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button x:Name="ToggleNavTrianglesButton"
+                                Margin="0,4,0,4"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Appearance="Secondary"
+                                Click="ToggleNavTrianglesOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="caretDownRight24"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button x:Name="ToggleNavDividerButton"
+                                Margin="0,4,0,4"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Appearance="Secondary"
+                                Click="ToggleNavDividerOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="textBaseline20"/>
+                            <!-- autoFitWidth24, tablePicnic20, virtualNetwork24, textBaseline20 -->
+                        </ui:Button.Icon>
+                    </ui:Button>
+                </StackPanel>
+            </ui:Card>
+            <!-- Mapa -->
+            <ScrollViewer x:Name="MapScrollViewer"
+                          Grid.Column="1"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          PreviewMouseWheel="MapScrollViewer_MouseWheel_Zoom"
+                          CanContentScroll="False">
 
-                <Canvas x:Name="MapCanvas"
-                        Focusable="True"
-                        MouseRightButtonDown="MapCanvas_MouseRightButtonDown"
-                        MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
-                        MouseLeftButtonUp="MapCanvas_MouseLeftButtonUp"
-                        MouseMove="MapCanvas_MouseMove">
+                <Grid HorizontalAlignment="Center"
+                      VerticalAlignment="Center">
 
-                    <Canvas.RenderTransform>
-                        <ScaleTransform x:Name="MapScale"
-                                        ScaleX="1"
-                                        ScaleY="1"/>
-                    </Canvas.RenderTransform>
+                    <Canvas x:Name="MapCanvas"
+                            Focusable="True"
+                            MouseRightButtonDown="MapCanvas_MouseRightButtonDown"
+                            MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
+                            MouseLeftButtonUp="MapCanvas_MouseLeftButtonUp"
+                            MouseMove="MapCanvas_MouseMove">
 
-                    <Image x:Name="MapImage"
-                           RenderOptions.BitmapScalingMode="LowQuality"/>
+                        <Canvas.RenderTransform>
+                            <ScaleTransform x:Name="MapScale"
+                                            ScaleX="1"
+                                            ScaleY="1"/>
+                        </Canvas.RenderTransform>
 
-                    <Line x:Name="LeftEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
+                        <Image x:Name="MapImage"
+                               RenderOptions.BitmapScalingMode="LowQuality"/>
 
-                    <Line x:Name="RightEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
+                        <Line x:Name="LeftEdge"
+                              Stroke="#80FF0000"
+                              StrokeThickness="2"
+                              IsHitTestVisible="True"/>
 
-                    <Line x:Name="TopEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
+                        <Line x:Name="RightEdge"
+                              Stroke="#80FF0000"
+                              StrokeThickness="2"
+                              IsHitTestVisible="True"/>
 
-                    <Line x:Name="BottomEdge"
-                          Stroke="#80FF0000"
-                          StrokeThickness="2"
-                          IsHitTestVisible="True"/>
-                </Canvas>
-            </Grid>
-        </ScrollViewer>
+                        <Line x:Name="TopEdge"
+                              Stroke="#80FF0000"
+                              StrokeThickness="2"
+                              IsHitTestVisible="True"/>
+
+                        <Line x:Name="BottomEdge"
+                              Stroke="#80FF0000"
+                              StrokeThickness="2"
+                              IsHitTestVisible="True"/>
+                    </Canvas>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

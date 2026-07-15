@@ -34,6 +34,8 @@ namespace marine_nav_trainer.Map.UI.Controls {
             this.RenderTransform = _rotateTransform;
             this.RenderTransformOrigin = new Point(0.5, 0.5);
 
+            Panel.SetZIndex(this, int.MaxValue-1); // pod kroczkiem
+
             DrawTriangle();
             DrawScale();
             DrawHandle();

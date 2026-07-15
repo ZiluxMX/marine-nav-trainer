@@ -51,6 +51,7 @@ namespace marine_nav_trainer.Map {
         private List<Position> _positions = new();
         private List<CourseLine> _courseLines = new();
         private List<NavTriangle> _navTriangles = new();
+        private List<NavDivider> _navDividers = new();
         private string _currentMapPath = string.Empty;
         private bool _disposed;
 
@@ -559,6 +560,32 @@ namespace marine_nav_trainer.Map {
             MapCanvas.Children.Add(triangle);
         }
 
+        private void ToggleNavDivider() {
+            if (_navDividers.Count > 0) {
+                bool anyVisible = _navDividers[0].Visibility == Visibility.Visible;
+                var newVisibility = anyVisible ? Visibility.Collapsed : Visibility.Visible;
+                foreach (var navDivider in _navDividers)
+                    navDivider.Visibility = newVisibility;
+                ToggleNavDividerButton.Appearance = anyVisible ? Wpf.Ui.Controls.ControlAppearance.Secondary
+                                                         : Wpf.Ui.Controls.ControlAppearance.Info;
+                return;
+            }
+            double size = 500;
+            var divider = new NavDivider(size);
+
+            ToggleNavDividerButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Info;
+
+            Point center = GetVisibleCenter();
+            double centerX = center.X - size / 2;
+            double centerY = center.Y - divider.Height / 2;
+
+            Canvas.SetLeft(divider, centerX);
+            Canvas.SetTop(divider, centerY);
+
+            _navDividers.Add(divider);
+            MapCanvas.Children.Add(divider);
+        }
+
         private void ToggleEdgesOnClick(object sender, RoutedEventArgs e) {
             ToggleCalibrationLines();
         }
@@ -593,6 +620,10 @@ namespace marine_nav_trainer.Map {
             ToggleNavTriangles();
         }
 
+        private void ToggleNavDividerOnClick(object sender, RoutedEventArgs e) {
+            ToggleNavDivider();
+        }
+          
         private void ClearOnClick(object sender, RoutedEventArgs e) {
             ClearMap();
         }
@@ -641,12 +672,16 @@ namespace marine_nav_trainer.Map {
             foreach (var triangle in _navTriangles) {
                 MapCanvas.Children.Remove(triangle);
             }
+            foreach (var divider in _navDividers) {
+                MapCanvas.Children.Remove(divider);
+            }
             if (_edgesVisible)
                 ToggleCalibrationLines();
 
             _positions.Clear();
             _courseLines.Clear();
             _navTriangles.Clear();
+            _navDividers.Clear();
 
             _selectedPosition = null;
             _selectedCourseLine = null;

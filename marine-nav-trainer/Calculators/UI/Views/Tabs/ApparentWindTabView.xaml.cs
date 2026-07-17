@@ -35,8 +35,8 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
                 WindDirection = (double)WindDirection.Value
             });
 
-            CompasWindDirection.Value = result.CompasWindDirection;
-            CompasWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(result.CompasWindDirection);
+            RelativeWindDirection.Value = result.RelativeWindDirection;
+            RelativeWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(result.RelativeWindDirection);
 
             ApparentWindDirection.Value = result.ApparentWindDirection;
             ApparentWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(result.ApparentWindDirection);

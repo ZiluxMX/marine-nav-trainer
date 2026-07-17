@@ -5,8 +5,11 @@ using System.Windows;
 using System.Windows.Controls;
 
 namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
-    public partial class DeadReckoningTabView : UserControl {
+    public partial class DeadReckoningTabView : UserControl, ICoordinatePointProducer {
         private readonly ICalculator<DeadReckoningInput, DeadReckoningResult> _deadReckoningCalc;
+
+        public event EventHandler<InsertPointEventArgs>? InsertPointRequested;
+
         public DeadReckoningTabView() {
             InitializeComponent();
 
@@ -16,20 +19,28 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         }
 
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            if (StartLat.Value == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
-            if (StartLon.Value == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
+            if (StartLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
+            if (StartLon.Coordinate == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
             if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
             if (DistanceNm.Value == null) { MessageBox.Show("Pole \"Droga (Nm)\" nie może być puste!"); return; }
 
             var result = _deadReckoningCalc.Calculate(new DeadReckoningInput {
-                StartLat = (double)StartLat.Value,
-                StartLon = (double)StartLon.Value,
+                StartLat = StartLat.Coordinate.Value,
+                StartLon = StartLon.Coordinate.Value,
                 Kdd = (double)Kdd.Value,
                 DistanceNm = (double)DistanceNm.Value
             });
 
-            DeadReckoningLat.Value = result.Lat;
-            DeadReckoningLon.Value = result.Lon;
+            DeadReckoningLat.Coordinate = result.Lat;
+            DeadReckoningLon.Coordinate = result.Lon;
+        }
+
+        private void WstawPunkt_Click(object sender, RoutedEventArgs e) {
+            if (DeadReckoningLat.Coordinate is not { } lat || DeadReckoningLon.Coordinate is not { } lon) {
+                MessageBox.Show("Najpierw oblicz pozycję.");
+                return;
+            }
+            InsertPointRequested?.Invoke(this, new InsertPointEventArgs(lat.DecimalDegrees, lon.DecimalDegrees));
         }
     }
 }

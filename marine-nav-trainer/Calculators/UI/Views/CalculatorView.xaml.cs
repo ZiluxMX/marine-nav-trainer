@@ -1,5 +1,6 @@
 ﻿using marine_nav_trainer.Calculators.UI.Views.Tabs;
 using System.Windows.Controls;
+using marine_nav_trainer.Calculators.UI;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 
@@ -7,6 +8,8 @@ namespace marine_nav_trainer.Calculators.UI.Views {
     public partial class CalculatorView : UserControl, IDisposable {
         private readonly Dictionary<string, UserControl> _viewCache = [];
         private bool _disposed;
+
+        public event EventHandler<InsertPointEventArgs>? InsertPointRequested;
 
         public CalculatorView() {
             InitializeComponent();
@@ -29,6 +32,8 @@ namespace marine_nav_trainer.Calculators.UI.Views {
                     "runningFix" => new RunningFixTabView(),
                     _ => throw new Exception("Unknown view")
                 };
+                if (view is ICoordinatePointProducer producer)
+                    producer.InsertPointRequested += (_, args) => InsertPointRequested?.Invoke(this, args);
                 _viewCache[key] = view;
             }
             return view;

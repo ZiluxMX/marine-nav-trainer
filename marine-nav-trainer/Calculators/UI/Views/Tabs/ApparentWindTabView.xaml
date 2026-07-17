@@ -61,9 +61,9 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Kierunek rzeczywisty"/>
-                    <ui:NumberBox x:Name="CompasWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                    <ui:TextBlock x:Name="CompasWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                    <ui:TextBlock Text="Kierunek względem dziobu"/>
+                    <ui:NumberBox x:Name="RelativeWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                    <ui:TextBlock x:Name="RelativeWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
                     <ui:TextBlock Text="Kierunek pozorny"/>
@@ -71,6 +71,9 @@
                     <ui:TextBlock x:Name="ApparentWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
                 </StackPanel>
             </Grid>
+            <Image x:Name="CompassRose"
+                   Source="pack://siteoforigin:,,,/Assets/Backgrounds/dual-compass-rose.png"
+                   Stretch="Uniform" MaxHeight="260" Margin="0,4,0,0" HorizontalAlignment="Center"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

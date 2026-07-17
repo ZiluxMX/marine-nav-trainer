@@ -1,6 +1,8 @@
-﻿namespace marine_nav_trainer.Calculators.Modules.Crossbar {
+using marine_nav_trainer.Calculators.Core;
+
+namespace marine_nav_trainer.Calculators.Modules.Crossbar {
     public class CrossbarResult {
-        public double Lat { get; set; }
-        public double Lon { get; set; }
+        public GeoCoordinate Lat { get; set; }
+        public GeoCoordinate Lon { get; set; }
     }
 }

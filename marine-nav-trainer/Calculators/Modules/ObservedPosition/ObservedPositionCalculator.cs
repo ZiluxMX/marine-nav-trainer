@@ -1,16 +1,24 @@
-﻿using marine_nav_trainer.Calculators.Core.Abstractions;
+using marine_nav_trainer.Calculators.Core;
+using marine_nav_trainer.Calculators.Core.Abstractions;
 
 namespace marine_nav_trainer.Calculators.Modules.ObservedPosition {
     public class ObservedPositionCalculator : ICalculator<ObservedPositionInput, ObservedPositionResult> {
         public ObservedPositionResult Calculate(ObservedPositionInput input) {
             double rad = Math.PI / 180.0;
-            double meanLat = (input.PoiALat + input.PoiBLat) / 2.0;
 
-            double ax = input.PoiALon * 60.0 * Math.Cos(meanLat * rad);
-            double ay = input.PoiALat * 60.0;
+            double aLat = input.PoiALat.DecimalDegrees;
+            double aLon = input.PoiALon.DecimalDegrees;
+            double bLat = input.PoiBLat.DecimalDegrees;
+            double bLon = input.PoiBLon.DecimalDegrees;
 
-            double bx = input.PoiBLon * 60.0 * Math.Cos(meanLat * rad);
-            double by = input.PoiBLat * 60.0;
+            double meanLat = (aLat + bLat) / 2.0;
+            double cosRef = Math.Cos(meanLat * rad);
+
+            double ax = aLon * 60.0 * cosRef;
+            double ay = aLat * 60.0;
+
+            double bx = bLon * 60.0 * cosRef;
+            double by = bLat * 60.0;
 
             double bearingA = (input.BearingA + 180.0) % 360.0;
             double bearingB = (input.BearingB + 180.0) % 360.0;
@@ -32,11 +40,11 @@ namespace marine_nav_trainer.Calculators.Modules.ObservedPosition {
             double py = ay + t * dy1;
 
             double lat = py / 60.0;
-            double lon = px / (60.0 * Math.Cos(meanLat * rad));
+            double lon = px / (60.0 * cosRef);
 
             return new ObservedPositionResult {
-                Lat = Math.Round(lat, 4),
-                Lon = Math.Round(lon, 4)
+                Lat = GeoCoordinate.FromDecimal(lat, CoordinateAxis.Latitude),
+                Lon = GeoCoordinate.FromDecimal(lon, CoordinateAxis.Longitude)
             };
         }
     }

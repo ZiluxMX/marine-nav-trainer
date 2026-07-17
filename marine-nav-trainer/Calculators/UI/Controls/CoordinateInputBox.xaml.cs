@@ -1,3 +1,4 @@
+using marine_nav_trainer.Calculators.Core;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,6 +28,13 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
         public bool IsLatitude {
             get => (bool)GetValue(IsLatitudeProperty);
             set => SetValue(IsLatitudeProperty, value);
+        }
+
+        public GeoCoordinate? Coordinate {
+            get => Value is double d
+                ? GeoCoordinate.FromDecimal(d, IsLatitude ? CoordinateAxis.Latitude : CoordinateAxis.Longitude)
+                : null;
+            set => Value = value?.DecimalDegrees;
         }
 
         private double MaxDegrees => IsLatitude ? 90 : 180;
@@ -59,7 +67,6 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
             }
         }
 
-        /// <summary>Ustawia wszystkie pola na podstawie wartości (np. wynik obliczeń).</summary>
         private void ShowValue(double? value) {
             _updating = true;
             try {

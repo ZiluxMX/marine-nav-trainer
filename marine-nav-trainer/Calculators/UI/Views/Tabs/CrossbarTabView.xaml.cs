@@ -5,8 +5,10 @@ using System.Windows;
 using System.Windows.Controls;
 
 namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
-    public partial class CrossbarTabView : UserControl {
+    public partial class CrossbarTabView : UserControl, ICoordinatePointProducer {
         private readonly ICalculator<CrossbarInput, CrossbarResult> _crossbarCalc;
+
+        public event EventHandler<InsertPointEventArgs>? InsertPointRequested;
 
         public CrossbarTabView() {
             InitializeComponent();
@@ -17,22 +19,30 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         }
 
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            if (PositionLat.Value == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
-            if (PositionLon.Value == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
-            if (PoiLat.Value == null) { MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!"); return; }
-            if (PoiLon.Value == null) { MessageBox.Show("Pole \"Długość punktu\" nie może być puste!"); return; }
+            if (PositionLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
+            if (PositionLon.Coordinate == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
+            if (PoiLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!"); return; }
+            if (PoiLon.Coordinate == null) { MessageBox.Show("Pole \"Długość punktu\" nie może być puste!"); return; }
             if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
 
             var result = _crossbarCalc.Calculate(new CrossbarInput {
-                PositionLat = (double)PositionLat.Value,
-                PositionLon = (double)PositionLon.Value,
-                PoiLat = (double)PoiLat.Value,
-                PoiLon = (double)PoiLon.Value,
+                PositionLat = PositionLat.Coordinate.Value,
+                PositionLon = PositionLon.Coordinate.Value,
+                PoiLat = PoiLat.Coordinate.Value,
+                PoiLon = PoiLon.Coordinate.Value,
                 Kdd = (double)Kdd.Value
             });
 
-            CrossbarLat.Value = result.Lat;
-            CrossbarLon.Value = result.Lon;
+            CrossbarLat.Coordinate = result.Lat;
+            CrossbarLon.Coordinate = result.Lon;
+        }
+
+        private void WstawPunkt_Click(object sender, RoutedEventArgs e) {
+            if (CrossbarLat.Coordinate is not { } lat || CrossbarLon.Coordinate is not { } lon) {
+                MessageBox.Show("Najpierw oblicz pozycję.");
+                return;
+            }
+            InsertPointRequested?.Invoke(this, new InsertPointEventArgs(lat.DecimalDegrees, lon.DecimalDegrees));
         }
     }
 }

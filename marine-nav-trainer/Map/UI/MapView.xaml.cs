@@ -2,7 +2,9 @@
 using marine_nav_trainer.Map.UI.Controls;
 using marine_nav_trainer.Map.UI.Views;
 using PdfiumViewer;
+using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -61,6 +63,10 @@ namespace marine_nav_trainer.Map {
         private const double LatBottom = 69.000000;
         private const double LonLeft = 12.000000;
         private const double LonRight = 21.000000;
+        private const double MarginLeft = 559.1442;
+        private const double MarginRight = 11877.5896;
+        private const double MarginTop = 534.0441;
+        private const double MarginBottom = 9184.4550;
         // -- koniec sekcji TEMP
 
         private const string DefaultMapFile = "DefaultSeaMap.pdf";
@@ -148,21 +154,35 @@ namespace marine_nav_trainer.Map {
             TopEdge.Visibility = isVisible;
             BottomEdge.Visibility = isVisible;
 
-            LeftEdge.X1 = LeftEdge.X2 = margin;
+#pragma warning disable CS0162 // Wykryto nieosiągalny kod
+            if (MarginLeft > 0)
+                LeftEdge.X1 = LeftEdge.X2 = MarginLeft;
+            else
+                LeftEdge.X1 = LeftEdge.X2 = margin;
             LeftEdge.Y1 = 0;
             LeftEdge.Y2 = h;
 
-            RightEdge.X1 = RightEdge.X2 = w - margin;
+            if (MarginRight > 0 && MarginRight < MapImage.Width)
+                RightEdge.X1 = RightEdge.X2 = MarginRight;
+            else
+                RightEdge.X1 = RightEdge.X2 = w - margin;
             RightEdge.Y1 = 0;
             RightEdge.Y2 = h;
 
-            TopEdge.Y1 = TopEdge.Y2 = margin;
+            if (MarginTop > 0)
+                TopEdge.Y1 = TopEdge.Y2 = MarginTop;
+            else
+                TopEdge.Y1 = TopEdge.Y2 = margin;
             TopEdge.X1 = 0;
             TopEdge.X2 = w;
 
-            BottomEdge.Y1 = BottomEdge.Y2 = h - margin;
+            if (MarginBottom > 0 && MarginBottom < MapImage.Height)
+                BottomEdge.Y1 = BottomEdge.Y2 = MarginBottom;
+            else
+                BottomEdge.Y1 = BottomEdge.Y2 = h - margin;
             BottomEdge.X1 = 0;
             BottomEdge.X2 = w;
+#pragma warning restore CS0162 // Wykryto nieosiągalny kod
         }
 
         private void ResizeMapToMainWindow() {
@@ -236,9 +256,11 @@ namespace marine_nav_trainer.Map {
             }
             if (Keyboard.IsKeyDown(Key.LeftAlt) && _edgesVisible) {
                 Point pos = mouse.GetPosition(MapCanvas);
-                _activeEdge = GetEdgeNearPoint(pos);
-                if (_activeEdge != null)
+                _activeEdge = GetEdgeNearPoint(pos, 20);
+                if (_activeEdge != null) {
                     MapCanvas.CaptureMouse();
+                    //Debug.WriteLine($"Margins: L:{LeftEdge.X1}; R:{RightEdge.X1}; T:{TopEdge.Y1}; B:{BottomEdge.Y1};");
+                }
                 return;
             }
             ClearSelected();
@@ -331,6 +353,58 @@ namespace marine_nav_trainer.Map {
             CoordsText.Text = $"φ:{latStr}  λ:{lonStr}";
         }
 
+        // współrzędne mieszczą się w granicach mapy
+        public bool IsWithinMapBounds(double lat, double lon)
+            => lat >= LatBottom && lat <= LatTop && lon >= LonLeft && lon <= LonRight;
+
+        public bool TryInsertPoint(double lat, double lon) {
+            if (MapImage.Source == null || MapCanvas.Width <= 0 || MapCanvas.Height <= 0)
+                return false;
+            if (!IsWithinMapBounds(lat, lon))
+                return false;
+
+            var (x, y) = GeoToPixelCalibrated(lat, lon);
+
+            var mark = new PositionMark(30);
+            Canvas.SetLeft(mark, x - MarkSize / 2);
+            Canvas.SetTop(mark, y - MarkSize / 2);
+            MapCanvas.Children.Add(mark);
+
+            var markPos = new Position {
+                Id = _nextIdPosition,
+                X = x,
+                Y = y,
+                Lat = lat,
+                Lon = lon,
+                Label = $"P{_nextIdPosition}",
+                Mark = mark
+            };
+
+            _positions.Add(markPos);
+            _nextIdPosition++;
+            mark.Tag = markPos;
+            return true;
+        }
+
+        // Odwrotność PixelToGeoCalibrated: współrzędne geograficzne -> piksel mapy
+        private (double x, double y) GeoToPixelCalibrated(double lat, double lon) {
+            double left = LeftEdge.X1;
+            double right = RightEdge.X1;
+            double top = TopEdge.Y1;
+            double bottom = BottomEdge.Y1;
+
+            double xn = (lon - LonLeft) / (LonRight - LonLeft);
+            double x = left + xn * (right - left);
+
+            double mTop = Math.Log(Math.Tan(Math.PI / 4 + DegToRad(LatTop) / 2));
+            double mBot = Math.Log(Math.Tan(Math.PI / 4 + DegToRad(LatBottom) / 2));
+            double my = Math.Log(Math.Tan(Math.PI / 4 + DegToRad(lat) / 2));
+            double yn = (mTop - my) / (mTop - mBot);
+            double y = top + yn * (bottom - top);
+
+            return (x, y);
+        }
+
         private (double lat, double lon) PixelToGeoCalibrated(double x, double y) {
             double left = LeftEdge.X1;
             double right = RightEdge.X1;
@@ -365,13 +439,11 @@ namespace marine_nav_trainer.Map {
             return $"{deg}° {min:00.0000}′{cardinal}";
         }
 
-
-        private Line? GetEdgeNearPoint(Point pos) {
-            const double tol = 8;
-            if (Math.Abs(pos.X - LeftEdge.X1) < tol) return LeftEdge;
-            if (Math.Abs(pos.X - RightEdge.X1) < tol) return RightEdge;
-            if (Math.Abs(pos.Y - TopEdge.Y1) < tol) return TopEdge;
-            if (Math.Abs(pos.Y - BottomEdge.Y1) < tol) return BottomEdge;
+        private Line? GetEdgeNearPoint(Point pos, Double tolerance = 8) {
+            if (Math.Abs(pos.X - LeftEdge.X1) < tolerance) return LeftEdge;
+            if (Math.Abs(pos.X - RightEdge.X1) < tolerance) return RightEdge;
+            if (Math.Abs(pos.Y - TopEdge.Y1) < tolerance) return TopEdge;
+            if (Math.Abs(pos.Y - BottomEdge.Y1) < tolerance) return BottomEdge;
 
             return null;
         }

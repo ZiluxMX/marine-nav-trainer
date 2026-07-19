@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using PdfiumViewer;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -72,7 +73,7 @@ namespace marine_nav_trainer.Windows.Views {
         }
 
         private void ImportMap_Click(object sender, RoutedEventArgs e) =>
-            ImportFile("Mapy nawigacyjne (*.pdf)|*.pdf", MapsDir);
+            ImportFile("Mapy nawigacyjne (*.pdf)|*.pdf", MapsDir, splitPdfPages: true);
 
         private void ImportJson_Click(object sender, RoutedEventArgs e) =>
             ImportFile("Pliki zadań (*.json)|*.json", JsonsDir);
@@ -139,7 +140,7 @@ namespace marine_nav_trainer.Windows.Views {
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ImportFile(string filter, string targetDir) {
+        private void ImportFile(string filter, string targetDir, bool splitPdfPages = false) {
             var dialog = new OpenFileDialog {
                 Title = "Wybierz plik do importu",
                 Filter = filter,
@@ -151,32 +152,94 @@ namespace marine_nav_trainer.Windows.Views {
 
             int copied = 0;
             int skipped = 0;
+            var errors = new List<string>();
+
             foreach (string src in dialog.FileNames) {
-                string dest = Path.Combine(targetDir, Path.GetFileName(src));
-                if (File.Exists(dest)) {
-                    var result = MessageBox.Show(
-                        $"Plik o nazwie \"{Path.GetFileName(src)}\" już istnieje. Czy nadpisać?",
-                        "Plik istnieje",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
-                    if (result != MessageBoxResult.Yes) {
+                try {
+                    if (splitPdfPages && TryGetPageCount(src, out int pageCount) && pageCount > 1)
+                        copied += SplitPdfIntoPages(src, targetDir, pageCount, ref skipped);
+                    else if (CopySingleFile(src, targetDir, Path.GetFileName(src)))
+                        copied++;
+                    else
                         skipped++;
-                        continue;
-                    }
                 }
-                File.Copy(src, dest, overwrite: true);
-                copied++;
+                catch (Exception ex) {
+                    errors.Add($"{Path.GetFileName(src)}: {ex.Message}");
+                }
             }
 
             Refresh();
 
-            if (copied > 0) {
+            if (copied > 0 || errors.Count > 0) {
+                string message = $"Zaimportowano plików: {copied}.";
+                if (skipped > 0)
+                    message += $"\nPominięto: {skipped}.";
+                if (errors.Count > 0)
+                    message += "\n\nBłędy:\n" + string.Join("\n", errors);
+
                 MessageBox.Show(
-                    $"Zaimportowano plików: {copied}." + (skipped > 0 ? $"\nPominięto: {skipped}." : ""),
+                    message,
                     "Import zakończony",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
             }
+        }
+
+        private int SplitPdfIntoPages(string src, string targetDir, int pageCount, ref int skipped) {
+            string baseName = Path.GetFileNameWithoutExtension(src);
+            int produced = 0;
+
+            for (int i = 0; i < pageCount; i++) {
+                string destName = $"{baseName}_{i + 1:D2}.pdf";
+                string dest = Path.Combine(targetDir, destName);
+
+                if (!ConfirmOverwrite(dest, destName)) {
+                    skipped++;
+                    continue;
+                }
+
+                SaveSinglePagePdf(src, i, dest);
+                produced++;
+            }
+
+            return produced;
+        }
+
+        private static void SaveSinglePagePdf(string src, int keepIndex, string destPath) {
+            using var doc = PdfDocument.Load(src);
+            for (int p = doc.PageCount - 1; p >= 0; p--)
+                if (p != keepIndex)
+                    doc.DeletePage(p);
+            doc.Save(destPath);
+        }
+
+        private static bool TryGetPageCount(string path, out int pageCount) {
+            pageCount = 0;
+            if (!string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase))
+                return false;
+            using var doc = PdfDocument.Load(path);
+            pageCount = doc.PageCount;
+            return true;
+        }
+
+        private static bool CopySingleFile(string src, string targetDir, string destName) {
+            string dest = Path.Combine(targetDir, destName);
+            if (!ConfirmOverwrite(dest, destName))
+                return false;
+            File.Copy(src, dest, overwrite: true);
+            return true;
+        }
+
+        private static bool ConfirmOverwrite(string destPath, string displayName) {
+            if (!File.Exists(destPath))
+                return true;
+
+            var result = MessageBox.Show(
+                $"Plik o nazwie \"{displayName}\" już istnieje. Czy nadpisać?",
+                "Plik istnieje",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            return result == MessageBoxResult.Yes;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) =>

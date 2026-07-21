@@ -6,74 +6,117 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              MaxWidth="400"
-             d:DesignHeight="450" Width="400">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="16,12,16,16">
+             d:DesignHeight="600" Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- Parametry statku -->
-            <ui:TextBlock Text="Parametry statku" FontTypography="BodyStrong" Margin="0,0,0,6"/>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Prędkość (kn)"/>
-                    <ui:NumberBox x:Name="BoatSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Kurs rzeczywisty (°)"/>
-                    <ui:NumberBox x:Name="BoatHeading" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                </StackPanel>
-            </Grid>
-
-            <Separator Margin="0,0,0,5"/>
-
-            <!-- Parametry wiatru -->
-            <ui:TextBlock Text="Parametry wiatru" FontTypography="BodyStrong" Margin="0,0,0,6"/>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Prędkość (kn)"/>
-                    <ui:NumberBox x:Name="WindSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Kierunek (°)"/>
-                    <ui:NumberBox x:Name="WindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                </StackPanel>
-            </Grid>
-
-            <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
-
-            <Separator Margin="0,0,0,5"/>
-
-            <!-- Wyniki -->
-            <ui:TextBlock Text="Wyniki — wiatr pozorny" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+        <Border Grid.Row="0" Padding="15,5,15,5"
+                BorderThickness="0,1,0,1"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Kierunek względem dziobu"/>
-                    <ui:NumberBox x:Name="RelativeWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                    <ui:TextBlock x:Name="RelativeWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Kierunek pozorny"/>
-                    <ui:NumberBox x:Name="ApparentWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                    <ui:TextBlock x:Name="ApparentWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:TextBlock Text="Wiatr pozorny" FontTypography="Subtitle" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
-            <Image x:Name="CompassRose"
-                   Source="pack://siteoforigin:,,,/Assets/Backgrounds/dual-compass-rose.png"
-                   Stretch="Uniform" MaxHeight="260" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-        </StackPanel>
-    </ScrollViewer>
+        </Border>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="16,12,16,16">
+
+                <!-- Parametry statku -->
+                <ui:TextBlock Text="Parametry statku" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock Text="Prędkość (kn)"/>
+                        <ui:NumberBox x:Name="BoatSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <ui:TextBlock Text="Kurs rzeczywisty (°)"/>
+                        <ui:NumberBox x:Name="BoatHeading"  SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                            <ui:NumberBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#FF0000"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="#FF0000"/>
+                            </ui:NumberBox.Resources>
+                        </ui:NumberBox>
+                    </StackPanel>
+                </Grid>
+
+                <Separator Margin="0,0,0,5"/>
+
+                <!-- Parametry wiatru -->
+                <ui:TextBlock Text="Parametry wiatru" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock Text="Prędkość (kn)"/>
+                        <ui:NumberBox x:Name="WindSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <ui:TextBlock Text="Kierunek (°)"/>
+                        <ui:NumberBox x:Name="WindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                            <ui:NumberBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#0000FF"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="#0000FF"/>
+                            </ui:NumberBox.Resources>
+                        </ui:NumberBox>
+                    </StackPanel>
+                </Grid>
+
+                <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
+
+                <Separator Margin="0,0,0,5"/>
+
+                <!-- Wyniki -->
+                <ui:TextBlock Text="Wyniki" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock Text="Kąt względem dziobu"/>
+                        <ui:NumberBox x:Name="RelativeWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                            <ui:NumberBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="GreenYellow"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="GreenYellow"/>
+                            </ui:NumberBox.Resources>
+                        </ui:NumberBox>
+                        <ui:TextBlock x:Name="RelativeWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <ui:TextBlock Text="Wiatr pozorny"/>
+                        <ui:NumberBox x:Name="ApparentWindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                            <ui:NumberBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="Violet"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="Violet"/>
+                            </ui:NumberBox.Resources>
+                        </ui:NumberBox>
+                        <ui:TextBlock x:Name="ApparentWindDirectionDegMin" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid HorizontalAlignment="Center" Margin="0,4,0,0">
+                    <Image x:Name="CompassRose"
+                       Source="pack://siteoforigin:,,,/Assets/Backgrounds/compass.png"
+                       Stretch="Uniform" MaxHeight="300"/>
+                    <Canvas x:Name="CompassOverlay"
+                        IsHitTestVisible="False"
+                        SizeChanged="CompassOverlay_SizeChanged"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

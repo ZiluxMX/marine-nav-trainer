@@ -19,11 +19,26 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         }
 
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            if (PositionLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
-            if (PositionLon.Coordinate == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
-            if (PoiLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!"); return; }
-            if (PoiLon.Coordinate == null) { MessageBox.Show("Pole \"Długość punktu\" nie może być puste!"); return; }
-            if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
+            if (PositionLat.Coordinate == null) {
+                MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!");
+                return;
+            }
+            if (PositionLon.Coordinate == null) {
+                MessageBox.Show("Pole \"Długość statku\" nie może być puste!");
+                return;
+            }
+            if (PoiLat.Coordinate == null) {
+                MessageBox.Show("Pole \"Szerokość punktu\" nie może być puste!");
+                return;
+            }
+            if (PoiLon.Coordinate == null) {
+                MessageBox.Show("Pole \"Długość punktu\" nie może być puste!");
+                return;
+            }
+            if (Kdd.Value == null) {
+                MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!");
+                return;
+            }
 
             var result = _crossbarCalc.Calculate(new CrossbarInput {
                 PositionLat = PositionLat.Coordinate.Value,

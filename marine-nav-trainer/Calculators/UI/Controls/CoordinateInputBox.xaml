@@ -21,7 +21,7 @@
                           TextChanged="DecimalBox_TextChanged"/>
 
             <ComboBox x:Name="CardinalBox" Grid.Column="4"
-                      MinWidth="52"
+                      MinWidth="60"
                       Padding="8,4,8,4"
                       SelectionChanged="Cardinal_SelectionChanged"/>
         </Grid>

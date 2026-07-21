@@ -30,6 +30,9 @@ namespace marine_nav_trainer {
                     case "fileList":
                         OpenFileList();
                         break;
+                    case "showControlsHelp":
+                        HelpControlsWindow.ShowSingle(this);
+                        break;
                 }
             }
         }
@@ -38,7 +41,7 @@ namespace marine_nav_trainer {
             DisposeCurrentContent();
             _taskCreatorView = new TaskCreatorView();
             _taskCreatorView.CloseRequested += (_, _) => DisposeCurrentContent();
-            MainContent.Content = _taskCreatorView;
+            SetContent(_taskCreatorView);
         }
 
         private void CloseFrame() {
@@ -47,14 +50,19 @@ namespace marine_nav_trainer {
 
         private void SolveExercise() {
             DisposeCurrentContent();
-            MainContent.Content = new MapView();
+            SetContent(new MapView());
         }
 
         private void OpenFileList() {
             DisposeCurrentContent();
             var view = new FileListView();
             view.CloseRequested += (_, _) => DisposeCurrentContent();
-            MainContent.Content = view;
+            SetContent(view);
+        }
+
+        private void SetContent(object content) {
+            MainContent.Content = content;
+            MainWindowMapBackground.Visibility = Visibility.Collapsed;
         }
 
         private void DisposeCurrentContent() {
@@ -62,6 +70,7 @@ namespace marine_nav_trainer {
                 disposable.Dispose();
             MainContent.Content = null;
             _taskCreatorView = null;
+            MainWindowMapBackground.Visibility = Visibility.Visible;
         }
 
     }

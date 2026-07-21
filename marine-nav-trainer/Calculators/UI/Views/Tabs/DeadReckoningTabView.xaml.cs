@@ -19,10 +19,22 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         }
 
         private void Oblicz_Click(object sender, RoutedEventArgs e) {
-            if (StartLat.Coordinate == null) { MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!"); return; }
-            if (StartLon.Coordinate == null) { MessageBox.Show("Pole \"Długość statku\" nie może być puste!"); return; }
-            if (Kdd.Value == null) { MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!"); return; }
-            if (DistanceNm.Value == null) { MessageBox.Show("Pole \"Droga (Nm)\" nie może być puste!"); return; }
+            if (StartLat.Coordinate == null) {
+                MessageBox.Show("Pole \"Szerokość statku\" nie może być puste!");
+                return;
+            }
+            if (StartLon.Coordinate == null) {
+                MessageBox.Show("Pole \"Długość statku\" nie może być puste!");
+                return;
+            }
+            if (Kdd.Value == null) {
+                MessageBox.Show("Pole \"Kurs (KDD)\" nie może być puste!");
+                return;
+            }
+            if (DistanceNm.Value == null) {
+                MessageBox.Show("Pole \"Droga (Nm)\" nie może być puste!");
+                return;
+            }
 
             var result = _deadReckoningCalc.Calculate(new DeadReckoningInput {
                 StartLat = StartLat.Coordinate.Value,

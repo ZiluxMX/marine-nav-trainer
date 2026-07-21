@@ -8,87 +8,103 @@
              mc:Ignorable="d"
              MaxWidth="400"
              d:DesignHeight="600" Width="400">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="16,12,16,16">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- Punkt 1 -->
-            <ui:TextBlock Text="Współrzędne punktu 1" FontTypography="BodyStrong" Margin="0,0,0,6"/>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0" Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość"/>
-                    <controls:CoordinateInputBox x:Name="PoiALat"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="2">
-                    <ui:TextBlock Text="Długość"/>
-                    <controls:CoordinateInputBox x:Name="PoiALon" IsLatitude="False"/>
-                </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
-                    <ui:TextBlock Text="Namiar (°)"/>
-                    <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                </StackPanel>
-            </Grid>
-
-            <Separator Margin="0,0,0,5"/>
-
-            <!-- Punkt 2 -->
-            <ui:TextBlock Text="Współrzędne punktu 2" FontTypography="BodyStrong" Margin="0,0,0,6"/>
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0" Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość"/>
-                    <controls:CoordinateInputBox x:Name="PoiBLat"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0" Grid.Column="2">
-                    <ui:TextBlock Text="Długość"/>
-                    <controls:CoordinateInputBox x:Name="PoiBLon" IsLatitude="False"/>
-                </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
-                    <ui:TextBlock Text="Namiar (°)"/>
-                    <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
-                </StackPanel>
-            </Grid>
-
-            <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
-
-            <Separator Margin="0,0,0,5"/>
-
-            <!-- Wyniki -->
-            <ui:TextBlock Text="Wyniki — pozycja obserwowana" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+        <Border Grid.Row="0" Padding="15,5,15,5"
+                BorderThickness="0,1,0,1"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <ui:TextBlock Text="Szerokość"/>
-                    <controls:CoordinateInputBox x:Name="ObservedPosLat"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <ui:TextBlock Text="Długość"/>
-                    <controls:CoordinateInputBox x:Name="ObservedPosLon" IsLatitude="False"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:TextBlock Text="Pozycja obserwowana" FontTypography="Subtitle" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="16,12,16,16">
 
-            <ui:Button Content="Wstaw punkt" Appearance="Primary" Click="WstawPunkt_Click"
+                <!-- Punkt 1 -->
+                <ui:TextBlock Text="Współrzędne punktu 1" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <ui:TextBlock Text="Szerokość"/>
+                        <controls:CoordinateInputBox x:Name="PoiALat"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <ui:TextBlock Text="Długość"/>
+                        <controls:CoordinateInputBox x:Name="PoiALon" IsLatitude="False"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
+                        <ui:TextBlock Text="Namiar (°)"/>
+                        <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                    </StackPanel>
+                </Grid>
+
+                <Separator Margin="0,0,0,5"/>
+
+                <!-- Punkt 2 -->
+                <ui:TextBlock Text="Współrzędne punktu 2" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <ui:TextBlock Text="Szerokość"/>
+                        <controls:CoordinateInputBox x:Name="PoiBLat"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <ui:TextBlock Text="Długość"/>
+                        <controls:CoordinateInputBox x:Name="PoiBLon" IsLatitude="False"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
+                        <ui:TextBlock Text="Namiar (°)"/>
+                        <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                    </StackPanel>
+                </Grid>
+
+                <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
+
+                <Separator Margin="0,0,0,5"/>
+
+                <!-- Wyniki -->
+                <ui:TextBlock Text="Wyniki — pozycja obserwowana" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock Text="Szerokość"/>
+                        <controls:CoordinateInputBox x:Name="ObservedPosLat"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <ui:TextBlock Text="Długość"/>
+                        <controls:CoordinateInputBox x:Name="ObservedPosLon" IsLatitude="False"/>
+                    </StackPanel>
+                </Grid>
+
+                <ui:Button Content="Wstaw punkt" Appearance="Primary" Click="WstawPunkt_Click"
                        HorizontalAlignment="Right" Margin="0,12,0,0"/>
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

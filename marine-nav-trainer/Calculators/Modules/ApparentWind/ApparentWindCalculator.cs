@@ -6,7 +6,7 @@ namespace marine_nav_trainer.Calculators.Modules.ApparentWind {
             double rad = Math.PI / 180.0;
 
             // Wiatr pozorny
-            double trueWindHeading = (input.WindDirection + 180.0) % 360.0;
+            double trueWindHeading = NormalizeDeg(input.WindDirection + 180.0);
 
             double boatHeadingRad = input.BoatHeading * rad;
             double trueWindHeadingRad = trueWindHeading * rad;
@@ -20,7 +20,7 @@ namespace marine_nav_trainer.Calculators.Modules.ApparentWind {
             double apparentWindVectorX = trueWindVectorX - boatVectorX;
             double apparentWindVectorY = trueWindVectorY - boatVectorY;
 
-            double apparentWindDirection = NormalizeDeg(Math.Atan2(apparentWindVectorX, apparentWindVectorY) / rad);
+            double apparentWindDirection = NormalizeDeg((Math.Atan2(apparentWindVectorX, apparentWindVectorY) / rad) + 180);
 
             // Kierunek, z którego czuć wieje względem dziobu
             double relativeWindDirection = NormalizeDeg(input.WindDirection - input.BoatHeading);

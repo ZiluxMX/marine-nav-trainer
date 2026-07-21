@@ -5,6 +5,7 @@ using PdfiumViewer;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,11 +27,13 @@ using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer.Map {
     public partial class MapView : UserControl, IDisposable {
-        private const double ZoomStep = 1.1;
-        private const double MinZoom = 0.08;
-        private const double MaxZoom = 2.0;
-        private const double BitmapScalingStep = 0.35;
-        private const double MarkSize = 30;
+        private const string DefaultMapFile = "ChatGPT_BackgroundMap.pdf";
+
+        private double ZoomStep = 1.1;
+        private double MinZoom = 0.08;
+        private double MaxZoom = 2.0;
+        private double BitmapScalingStep = 0.35;
+        private double MarkSize = 30;
 
         private Point _panStart;
         private Line? _activeEdge = null;
@@ -46,6 +49,8 @@ namespace marine_nav_trainer.Map {
         private bool _isCourseMode = false;
         private bool _isDrawingLine = false;
         private bool _courseDirectionLocked = false;
+        private bool _isDisposed;
+        private bool _isUpdating;
         private Vector _courseDirection;
         private Position? _startPosition = null;
         private Position? _selectedPosition = null;
@@ -55,30 +60,65 @@ namespace marine_nav_trainer.Map {
         private List<NavTriangle> _navTriangles = new();
         private List<NavDivider> _navDividers = new();
         private string _currentMapPath = string.Empty;
-        private bool _disposed;
-
 
         // --sekcja TEMP <- JSON        
-        private const double LatTop = 71.333333;
-        private const double LatBottom = 69.000000;
-        private const double LonLeft = 12.000000;
-        private const double LonRight = 21.000000;
-        private const double MarginLeft = 559.1442;
-        private const double MarginRight = 11877.5896;
-        private const double MarginTop = 534.0441;
-        private const double MarginBottom = 9184.4550;
+        private double LatTop = 71.333333;
+        private double LatBottom = 69.000000;
+        private double LonLeft = 12.000000;
+        private double LonRight = 21.000000;
         // -- koniec sekcji TEMP
+        private double MarginLeft = 0;
+        private double MarginRight = 0;
+        private double MarginTop = 0;
+        private double MarginBottom = 0;
 
-        private const string DefaultMapFile = "DefaultSeaMap.pdf";
         private static readonly string BackgroundDir = AppPaths.BackgroundDir;
         private static readonly string MapsDir = AppPaths.MapsDir;
 
+        private double MapContentWidth => ContentExtent(MapImage.Width);
+        private double MapContentHeight => ContentExtent(MapImage.Height);
+
+
         public MapView() {
             InitializeComponent();
+            InitMapBoundsInputs();
             LoadPdfMap(Path.Combine(BackgroundDir, DefaultMapFile), true);
             Dispatcher.InvokeAsync(() => {
                 ResizeMapToMainWindow();
             }, Threading.DispatcherPriority.Loaded);
+        }
+
+        private void InitMapBoundsInputs() {
+            LatTopCardinalBox.ItemsSource = new[] { "N", "S" };
+            LatBottomCardinalBox.ItemsSource = new[] { "N", "S" };
+            LonLeftCardinalBox.ItemsSource = new[] { "E", "W" };
+            LonRightCardinalBox.ItemsSource = new[] { "E", "W" };
+
+            _isUpdating = true;
+            try {
+                ShowBound(LatTop, LatTopDegBox, LatTopMinBox, LatTopCardinalBox);
+                ShowBound(LatBottom, LatBottomDegBox, LatBottomMinBox, LatBottomCardinalBox);
+                ShowBound(LonLeft, LonLeftDegBox, LonLeftMinBox, LonLeftCardinalBox);
+                ShowBound(LonRight, LonRightDegBox, LonRightMinBox, LonRightCardinalBox);
+            }
+            finally {
+                _isUpdating = false;
+            }
+        }
+
+        private void ShowBound(double value, Wpf.Ui.Controls.NumberBox degBox,
+                                      Wpf.Ui.Controls.NumberBox minBox, System.Windows.Controls.ComboBox cardinalBox) {
+            double abs = Math.Abs(value);
+            int deg = (int)Math.Floor(abs);
+            double min = Math.Round((abs - deg) * 60.0, 4);
+
+            if (min >= 60) {
+                deg++;
+                min = 0;
+            }
+            degBox.Value = deg;
+            minBox.Value = min;
+            cardinalBox.SelectedIndex = value < 0 ? 1 : 0;
         }
 
         private void LoadPdfMap(string pdfPath, bool IsDefaultMap = false) {
@@ -112,7 +152,8 @@ namespace marine_nav_trainer.Map {
 
             //Debug.WriteLine($"Height={height}  Width={width}");
 
-            InitCalibrationEdges(!IsDefaultMap);
+            //InitCalibrationEdges(!IsDefaultMap);
+            InitCalibrationEdges(false);
         }
 
         private WriteableBitmap ConvertToWriteableBitmap(Bitmap bitmap) {
@@ -140,10 +181,10 @@ namespace marine_nav_trainer.Map {
             }
         }
 
-        private void InitCalibrationEdges(bool IsEdgesVisible) {
+        private void InitCalibrationEdges(bool IsEdgesVisible, bool ResetMargins = true) {
             const double margin = 100;
-            double w = MapCanvas.Width;
-            double h = MapCanvas.Height;
+            double w = MapImage.Width;
+            double h = MapImage.Height;
 
             _edgesVisible = IsEdgesVisible;
             ToggleEdgesButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
@@ -153,6 +194,14 @@ namespace marine_nav_trainer.Map {
             RightEdge.Visibility = isVisible;
             TopEdge.Visibility = isVisible;
             BottomEdge.Visibility = isVisible;
+            BorderValueTab.Visibility = isVisible;
+
+            if (ResetMargins) {
+                MarginLeft = 0;
+                MarginRight = 0;
+                MarginTop = 0;
+                MarginBottom = 0;
+            }
 
 #pragma warning disable CS0162 // Wykryto nieosiągalny kod
             if (MarginLeft > 0)
@@ -183,6 +232,8 @@ namespace marine_nav_trainer.Map {
             BottomEdge.X1 = 0;
             BottomEdge.X2 = w;
 #pragma warning restore CS0162 // Wykryto nieosiągalny kod
+
+            UpdateMarginInputsFromEdges();
         }
 
         private void ResizeMapToMainWindow() {
@@ -312,10 +363,16 @@ namespace marine_nav_trainer.Map {
             if (_activeEdge != null && _edgesVisible) {
                 Point pos = mouse.GetPosition(MapCanvas);
 
-                if (_activeEdge == LeftEdge || _activeEdge == RightEdge)
-                    _activeEdge.X1 = _activeEdge.X2 = Clamp(pos.X, 0, MapCanvas.Width);
+                if (_activeEdge == LeftEdge)
+                    LeftEdge.X1 = LeftEdge.X2 = Clamp(pos.X, 0, RightEdge.X1);
+                else if (_activeEdge == RightEdge)
+                    RightEdge.X1 = RightEdge.X2 = Clamp(pos.X, LeftEdge.X1, MapContentWidth);
+                else if (_activeEdge == TopEdge)
+                    TopEdge.Y1 = TopEdge.Y2 = Clamp(pos.Y, 0, BottomEdge.Y1);
                 else
-                    _activeEdge.Y1 = _activeEdge.Y2 = Clamp(pos.Y, 0, MapCanvas.Height);
+                    BottomEdge.Y1 = BottomEdge.Y2 = Clamp(pos.Y, TopEdge.Y1, MapContentHeight);
+
+                UpdateMarginInputsFromEdges();
                 return;
             }
             if (_isPanning) {
@@ -351,6 +408,18 @@ namespace marine_nav_trainer.Map {
 
             //Debug.WriteLine($"LAT = {latStr}   LON = {lonStr}");
             CoordsText.Text = $"φ:{latStr}  λ:{lonStr}";
+        }
+
+        private void MapMargin_LostFocus(object sender, RoutedEventArgs e) {
+            UpdateMarginInputsFromEdges();
+        }
+
+        private void MapBoundsDegMin_TextChanged(object sender, TextChangedEventArgs e) {
+            UpdateMapBoundsFromInputs();
+        }
+
+        private void MapBoundsCardinal_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            UpdateMapBoundsFromInputs();
         }
 
         // współrzędne mieszczą się w granicach mapy
@@ -577,6 +646,8 @@ namespace marine_nav_trainer.Map {
             RightEdge.Visibility = isVisible;
             TopEdge.Visibility = isVisible;
             BottomEdge.Visibility = isVisible;
+
+            BorderValueTab.Visibility = isVisible;
         }
 
         private void ToggleThermeStyle() {
@@ -695,7 +766,7 @@ namespace marine_nav_trainer.Map {
         private void ToggleNavDividerOnClick(object sender, RoutedEventArgs e) {
             ToggleNavDivider();
         }
-          
+
         private void ClearOnClick(object sender, RoutedEventArgs e) {
             ClearMap();
         }
@@ -726,6 +797,83 @@ namespace marine_nav_trainer.Map {
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+
+        private void MapMargin_TextChanged(object sender, TextChangedEventArgs e) {
+            if (_isUpdating)
+                return;
+            if (sender is not Wpf.Ui.Controls.NumberBox box)
+                return;
+            if (!TryParseBound(box.Text, out double value))
+                return;
+
+            _isUpdating = true;
+            try {
+                if (box == MarginLeftBox) {
+                    MarginLeft = Clamp(value, 0, Math.Min(MapContentWidth, MarginRight));
+                    LeftEdge.X1 = LeftEdge.X2 = MarginLeft;
+                }
+                else if (box == MarginRightBox) {
+                    MarginRight = Clamp(value, MarginLeft, MapContentWidth);
+                    RightEdge.X1 = RightEdge.X2 = MarginRight;
+                }
+                else if (box == MarginTopBox) {
+                    MarginTop = Clamp(value, 0, Math.Min(MapContentHeight, MarginBottom));
+                    TopEdge.Y1 = TopEdge.Y2 = MarginTop;
+                }
+                else if (box == MarginBottomBox) {
+                    MarginBottom = Clamp(value, MarginTop, MapContentHeight);
+                    BottomEdge.Y1 = BottomEdge.Y2 = MarginBottom;
+                }
+            }
+            finally {
+                _isUpdating = false;
+            }
+        }
+
+        private void UpdateMapBoundsFromInputs() {
+            if (_isUpdating)
+                return;
+            _isUpdating = true;
+            try {
+                if (TryReadBound(LatTopDegBox, LatTopMinBox, LatTopCardinalBox, 90, out double latTop)
+                    && latTop != LatBottom)
+                    LatTop = latTop;
+
+                if (TryReadBound(LatBottomDegBox, LatBottomMinBox, LatBottomCardinalBox, 90, out double latBottom)
+                    && latBottom != LatTop)
+                    LatBottom = latBottom;
+
+                if (TryReadBound(LonLeftDegBox, LonLeftMinBox, LonLeftCardinalBox, 180, out double lonLeft)
+                    && lonLeft != LonRight)
+                    LonLeft = lonLeft;
+
+                if (TryReadBound(LonRightDegBox, LonRightMinBox, LonRightCardinalBox, 180, out double lonRight)
+                    && lonRight != LonLeft)
+                    LonRight = lonRight;
+            }
+            finally {
+                _isUpdating = false;
+            }
+        }
+
+        private bool TryReadBound(Wpf.Ui.Controls.NumberBox degBox, Wpf.Ui.Controls.NumberBox minBox,
+                                  System.Windows.Controls.ComboBox cardinalBox, double maxDegrees, out double value) {
+            value = 0;
+            bool hasDeg = TryParseBound(degBox.Text, out double deg);
+            bool hasMin = TryParseBound(minBox.Text, out double min);
+            if (!hasDeg && !hasMin)
+                return false;
+
+            double sign = cardinalBox.SelectedIndex == 1 ? -1.0 : 1.0;
+            double d = sign * ((hasDeg ? deg : 0) + (hasMin ? min : 0) / 60.0);
+            value = Math.Clamp(Math.Round(d, 6), -maxDegrees, maxDegrees);
+            return true;
+        }
+
+        private bool TryParseBound(string? s, out double value) {
+            s = (s ?? string.Empty).Trim().Replace(',', '.');
+            return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
         }
 
         private void ClearMap() {
@@ -783,6 +931,8 @@ namespace marine_nav_trainer.Map {
             => d * Math.PI / 180.0;
         private static double RadToDeg(double r)
             => r * 180.0 / Math.PI;
+        private static double ContentExtent(double extent)
+            => double.IsNaN(extent) || extent <= 0 ? double.PositiveInfinity : extent;
 
 
         // inne        
@@ -845,10 +995,28 @@ namespace marine_nav_trainer.Map {
             }
         }
 
+        private void UpdateMarginInputsFromEdges() {
+            MarginLeft = LeftEdge.X1;
+            MarginRight = RightEdge.X1;
+            MarginTop = TopEdge.Y1;
+            MarginBottom = BottomEdge.Y1;
+
+            _isUpdating = true;
+            try {
+                MarginLeftBox.Value = Math.Round(MarginLeft, 2);
+                MarginRightBox.Value = Math.Round(MarginRight, 2);
+                MarginTopBox.Value = Math.Round(MarginTop, 2);
+                MarginBottomBox.Value = Math.Round(MarginBottom, 2);
+            }
+            finally {
+                _isUpdating = false;
+            }
+        }
+
         public void Dispose() {
-            if (_disposed)
+            if (_isDisposed)
                 return;
-            _disposed = true;
+            _isDisposed = true;
 
             ClearMap();
         }

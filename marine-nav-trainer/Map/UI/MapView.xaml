@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:marine_nav_trainer.Map"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="1000">
+             d:DesignHeight="700" d:DesignWidth="1000">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,7 +16,6 @@
         <ui:Card Grid.Row="0" Padding="8,2,8,2">
             <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -25,45 +24,45 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
 
-                    <ui:TextBlock Text="Panel sterowania"                              
-                                  FontSize="16"                   
-                                  VerticalAlignment="Center"      
-                                  Margin="4,0,4,0"/>
+                        <ui:TextBlock Text="Panel sterowania"                              
+                                      FontSize="16"                   
+                                      VerticalAlignment="Center"      
+                                      Margin="4,0,4,0"/>
 
-                    <ui:Button x:Name="ToggleEdgesButton"
-                               Content="Krawędzie mapy"
-                               Margin="4,0,4,0"
-                               Appearance="Info"
-                               Click="ToggleEdgesOnClick"/>
+                        <ui:Button x:Name="ToggleEdgesButton"
+                                   Content="Krawędzie mapy"
+                                   Margin="4,0,4,0"
+                                   Appearance="Info"
+                                   Click="ToggleEdgesOnClick"/>
 
-                    <ui:Button Content="Resetuj przybliżenie"
-                               Margin="4,0,4,0"
-                               Appearance="Secondary"
-                               Click="ResizeMapOnClick"/>
-                    <!-- 
+                        <ui:Button Content="Resetuj przybliżenie"
+                                   Margin="4,0,4,0"
+                                   Appearance="Secondary"
+                                   Click="ResizeMapOnClick"/>
+                        <!-- 
                         <ui:Button Content="Motyw"
                                Margin="4,0,4,0"
                                Click="ToggleThermeOnClick"/>
                     -->
-                    
-                    <ui:Button x:Name="DeleteSelectedButton"
-                               Content="Usuń zaznaczone"
-                               Margin="4,0,4,0"
-                               Appearance="Secondary"
-                               Click="DeleteSelectedOnClick"/>
-                    
-                    <!--
+
+                        <ui:Button x:Name="DeleteSelectedButton"
+                                   Content="Usuń zaznaczone"
+                                   Margin="4,0,4,0"
+                                   Appearance="Secondary"
+                                   Click="DeleteSelectedOnClick"/>
+
+                        <!--
                     <ui:Button Content="Czyść mapę"
                                Margin="4,0,4,0"
                                Appearance="Secondary"
                                Click="ClearOnClick"/>
                     -->
-                    <ui:Button x:Name="SelectMapButton"
-                               Content="Wybierz mapę"
-                               Margin="4,0,4,0"
-                               Appearance="Danger"
-                               Click="SelectMapOnClick"/>
-                </StackPanel>
+                        <ui:Button x:Name="SelectMapButton"
+                                   Content="Wybierz mapę"
+                                   Margin="4,0,4,0"
+                                   Appearance="Danger"
+                                   Click="SelectMapOnClick"/>
+                    </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">
                     <ui:TextBlock x:Name="CoordsText"/>
@@ -74,6 +73,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <!-- Panel boczny -->
             <ui:Card Grid.Column="0" 
@@ -82,6 +82,9 @@
                      HorizontalAlignment="Left">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Top">
                     <ui:Button x:Name="SetMarkButton"
+                               ToolTip="Wstaw punkt"
+                               ToolTipService.Placement="Right"
+                               ToolTipService.InitialShowDelay="700"
                                Margin="0,4,0,4"
                                HorizontalAlignment="Stretch"
                                HorizontalContentAlignment="Center"
@@ -93,6 +96,9 @@
                     </ui:Button>
 
                     <ui:Button x:Name="SetCourseButton"
+                               ToolTip="Linia kursu"
+                               ToolTipService.Placement="Right" 
+                               ToolTipService.InitialShowDelay="700"
                                Margin="0,4,0,4"
                                HorizontalAlignment="Stretch"
                                HorizontalContentAlignment="Center"
@@ -103,21 +109,27 @@
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button x:Name="ToggleNavTrianglesButton"
-                                Margin="0,4,0,4"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                Appearance="Secondary"
-                                Click="ToggleNavTrianglesOnClick">
+                               ToolTip="Trójkąt nawigacyjny"
+                               ToolTipService.Placement="Right" 
+                               ToolTipService.InitialShowDelay="700"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="ToggleNavTrianglesOnClick">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="caretDownRight24"/>
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button x:Name="ToggleNavDividerButton"
-                                Margin="0,4,0,4"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                Appearance="Secondary"
-                                Click="ToggleNavDividerOnClick">
+                               ToolTip="Kroczek nawigacyjny"
+                               ToolTipService.Placement="Right" 
+                               ToolTipService.InitialShowDelay="700"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="ToggleNavDividerOnClick">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="textBaseline20"/>
                             <!-- autoFitWidth24, tablePicnic20, virtualNetwork24, textBaseline20 -->
@@ -174,6 +186,216 @@
                     </Canvas>
                 </Grid>
             </ScrollViewer>
+            <Border x:Name="BorderValueTab" Grid.Column="2" 
+                    Padding="8,2,8,2" 
+                    BorderThickness="1,1,1,1"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Padding="5,5,5,5"
+                                BorderThickness="0,0,0,1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" 
+                                            HorizontalAlignment="Center">
+                                    <ui:TextBlock Text="Granice mapy" FontTypography="Subtitle" 
+                                                  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <ui:TextBlock Text="Szerokość górna (φ)" Margin="0,6,0,0"/>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:NumberBox x:Name="LatTopDegBox" Grid.Column="0"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="0"
+                                          Minimum="0" Maximum="90"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="°"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ui:NumberBox x:Name="LatTopMinBox" Grid.Column="2"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="1"
+                                          Minimum="0" Maximum="59.9"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="′"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ComboBox x:Name="LatTopCardinalBox" Grid.Column="4"
+                                      MinWidth="56"
+                                      Padding="6,1,6,1"
+                                      SelectionChanged="MapBoundsCardinal_SelectionChanged"/>
+                        </Grid>
+
+                        <ui:TextBlock Text="Szerokość dolna (φ)" Margin="0,6,0,0"/>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:NumberBox x:Name="LatBottomDegBox" Grid.Column="0"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="0"
+                                          Minimum="0" Maximum="90"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="°"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ui:NumberBox x:Name="LatBottomMinBox" Grid.Column="2"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="1"
+                                          Minimum="0" Maximum="59.9"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="′"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ComboBox x:Name="LatBottomCardinalBox" Grid.Column="4"
+                                      MinWidth="56"
+                                      MinHeight="0"
+                                      Padding="6,1,6,1"
+                                      SelectionChanged="MapBoundsCardinal_SelectionChanged"/>
+                        </Grid>
+
+                        <ui:TextBlock Text="Długość lewa (λ)" Margin="0,6,0,0"/>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:NumberBox x:Name="LonLeftDegBox" Grid.Column="0"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="0"
+                                          Minimum="0" Maximum="180"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="°"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ui:NumberBox x:Name="LonLeftMinBox" Grid.Column="2"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="1"
+                                          Minimum="0" Maximum="59.9"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="′"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ComboBox x:Name="LonLeftCardinalBox" Grid.Column="4"
+                                      MinWidth="56"
+                                      Padding="6,1,6,1"
+                                      SelectionChanged="MapBoundsCardinal_SelectionChanged"/>
+                        </Grid>
+
+                        <ui:TextBlock Text="Długość prawa (λ)" Margin="0,6,0,0"/>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:NumberBox x:Name="LonRightDegBox" Grid.Column="0"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="0"
+                                          Minimum="0" Maximum="180"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="°"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ui:NumberBox x:Name="LonRightMinBox" Grid.Column="2"
+                                          MinWidth="45"
+                                          SpinButtonPlacementMode="Hidden"
+                                          ClearButtonEnabled="False"
+                                          MaxDecimalPlaces="1"
+                                          Minimum="0" Maximum="59.9"
+                                          Padding="6,1,6,1"
+                                          PlaceholderText="′"
+                                          TextChanged="MapBoundsDegMin_TextChanged"/>
+                            <ComboBox x:Name="LonRightCardinalBox" Grid.Column="4"
+                                      MinWidth="56"
+                                      Padding="6,1,6,1"
+                                      SelectionChanged="MapBoundsCardinal_SelectionChanged"/>
+                        </Grid>
+                        <!-- Marginesy -->
+                        <Border Margin="0, 5, 0, 0"
+                                Padding="5,5,5,5"
+                                BorderThickness="0,1,0,1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" 
+                                            HorizontalAlignment="Center">
+                                    <ui:TextBlock Text="Marginesy mapy" FontTypography="Subtitle"
+                                                  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <ui:TextBlock Text="Margines lewy (px)" Margin="0,6,0,0"/>
+                        <ui:NumberBox x:Name="MarginLeftBox" Margin="0,2,0,0"
+                                      SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False"
+                                      MaxDecimalPlaces="2"
+                                      Minimum="0"
+                                      Padding="6,1,6,1"
+                                      PlaceholderText="px"
+                                      TextChanged="MapMargin_TextChanged"
+                                      LostFocus="MapMargin_LostFocus"/>
+
+                        <ui:TextBlock Text="Margines prawy (px)" Margin="0,6,0,0"/>
+                        <ui:NumberBox x:Name="MarginRightBox" Margin="0,2,0,0"
+                                      SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False"
+                                      MaxDecimalPlaces="2"
+                                      Minimum="0"
+                                      Padding="6,1,6,1"
+                                      PlaceholderText="px"
+                                      TextChanged="MapMargin_TextChanged"
+                                      LostFocus="MapMargin_LostFocus"/>
+
+                        <ui:TextBlock Text="Margines górny (px)" Margin="0,6,0,0"/>
+                        <ui:NumberBox x:Name="MarginTopBox" Margin="0,2,0,0"
+                                      SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False"
+                                      MaxDecimalPlaces="2"
+                                      Minimum="0"
+                                      Padding="6,1,6,1"
+                                      PlaceholderText="px"
+                                      TextChanged="MapMargin_TextChanged"
+                                      LostFocus="MapMargin_LostFocus"/>
+
+                        <ui:TextBlock Text="Margines dolny (px)" Margin="0,6,0,0"/>
+                        <ui:NumberBox x:Name="MarginBottomBox" Margin="0,2,0,4"
+                                      SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False"
+                                      MaxDecimalPlaces="2"
+                                      Minimum="0"
+                                      Padding="6,1,6,1"
+                                      PlaceholderText="px"
+                                      TextChanged="MapMargin_TextChanged"
+                                      LostFocus="MapMargin_LostFocus"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,6 +28,8 @@ using Threading = System.Windows.Threading;
 
 namespace marine_nav_trainer.Map {
     public partial class MapView : UserControl, IDisposable {
+        public bool _isTeacherMode = true;
+
         private const string DefaultMapFile = "ChatGPT_BackgroundMap.pdf";
 
         private double ZoomStep = 1.1;
@@ -40,6 +43,7 @@ namespace marine_nav_trainer.Map {
         private Line? _currentLine = null;
         private int _nextIdPosition = 0;
         private int _nextIdCourse = 0;
+        private int _nextIdGuide = 0;
         private double _hOffsetStart;
         private double _vOffsetStart;
         private bool _isPanning;
@@ -47,26 +51,29 @@ namespace marine_nav_trainer.Map {
         private bool _isLightMode = true;
         private bool _isMarkMode = false;
         private bool _isCourseMode = false;
+        private bool _isGuideLineMode = false;
         private bool _isDrawingLine = false;
         private bool _courseDirectionLocked = false;
         private bool _isDisposed;
         private bool _isUpdating;
+        private bool _isSyncingSelection;
         private Vector _courseDirection;
         private Position? _startPosition = null;
         private Position? _selectedPosition = null;
         private CourseLine? _selectedCourseLine = null;
+        private GuideLine? _selectedGuideLine = null;
         private List<Position> _positions = new();
         private List<CourseLine> _courseLines = new();
+        private List<GuideLine> _guideLines = new();
         private List<NavTriangle> _navTriangles = new();
         private List<NavDivider> _navDividers = new();
         private string _currentMapPath = string.Empty;
 
-        // --sekcja TEMP <- JSON        
-        private double LatTop = 71.333333;
-        private double LatBottom = 69.000000;
-        private double LonLeft = 12.000000;
-        private double LonRight = 21.000000;
-        // -- koniec sekcji TEMP
+        // JSON        
+        private double LatTop = 0;
+        private double LatBottom = 0;
+        private double LonLeft = 0;
+        private double LonRight = 0;
         private double MarginLeft = 0;
         private double MarginRight = 0;
         private double MarginTop = 0;
@@ -74,6 +81,7 @@ namespace marine_nav_trainer.Map {
 
         private static readonly string BackgroundDir = AppPaths.BackgroundDir;
         private static readonly string MapsDir = AppPaths.MapsDir;
+        private static readonly string JsonsDir = AppPaths.JsonsDir;
 
         private double MapContentWidth => ContentExtent(MapImage.Width);
         private double MapContentHeight => ContentExtent(MapImage.Height);
@@ -121,7 +129,7 @@ namespace marine_nav_trainer.Map {
             cardinalBox.SelectedIndex = value < 0 ? 1 : 0;
         }
 
-        private void LoadPdfMap(string pdfPath, bool IsDefaultMap = false) {
+        private void LoadPdfMap(string pdfPath, bool IsDefaultMap = false, bool resetMargins = true) {
             using var document = PdfDocument.Load(pdfPath);
             int pageIndex = 0;
             int dpi = 300; //400
@@ -153,7 +161,7 @@ namespace marine_nav_trainer.Map {
             //Debug.WriteLine($"Height={height}  Width={width}");
 
             //InitCalibrationEdges(!IsDefaultMap);
-            InitCalibrationEdges(false);
+            InitCalibrationEdges(false, resetMargins);
         }
 
         private WriteableBitmap ConvertToWriteableBitmap(Bitmap bitmap) {
@@ -187,14 +195,24 @@ namespace marine_nav_trainer.Map {
             double h = MapImage.Height;
 
             _edgesVisible = IsEdgesVisible;
+
             ToggleEdgesButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
                                                          : Wpf.Ui.Controls.ControlAppearance.Secondary;
+
+            TogglePointsTabButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                             : Wpf.Ui.Controls.ControlAppearance.Secondary;
+
+            ToggleCourseTabButton.Appearance = _edgesVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                             : Wpf.Ui.Controls.ControlAppearance.Secondary;
+
             var isVisible = _edgesVisible ? Visibility.Visible : Visibility.Collapsed;
             LeftEdge.Visibility = isVisible;
             RightEdge.Visibility = isVisible;
             TopEdge.Visibility = isVisible;
             BottomEdge.Visibility = isVisible;
             BorderValueTab.Visibility = isVisible;
+            PositionValuesTab.Visibility = isVisible;
+            CourseValuesTab.Visibility = isVisible;
 
             if (ResetMargins) {
                 MarginLeft = 0;
@@ -319,6 +337,10 @@ namespace marine_nav_trainer.Map {
                 SetCourseLine(mouse);
                 return;
             }
+            if (_isGuideLineMode) {
+                SetGuideLine(mouse);
+                return;
+            }
             if (_isMarkMode) {
                 SetPositionMark(mouse);
                 return;
@@ -330,13 +352,16 @@ namespace marine_nav_trainer.Map {
 
         private void ClearSelected() {
             if (_selectedPosition != null) {
-                _selectedPosition.Mark.Color = Brushes.Blue;
-                _selectedPosition = null;
-                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                ApplyPositionSelection(null);
             }
             if (_selectedCourseLine != null) {
-                _selectedCourseLine.Line.Stroke = Brushes.Blue;
-                _selectedCourseLine = null;
+                ApplyCourseSelection(null);
+            }
+            if (_selectedGuideLine != null) {
+                if (_selectedGuideLine.Line != null) {
+                    _selectedGuideLine.Line.Stroke = Brushes.Gold;
+                }
+                _selectedGuideLine = null;
                 DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             }
         }
@@ -344,16 +369,19 @@ namespace marine_nav_trainer.Map {
         private bool MarkObject(MouseButtonEventArgs mouse) {
             Position? markPos = GetMarkPositionFromSource(mouse.OriginalSource);
             if (markPos != null) {
-                markPos.Mark.Color = Brushes.Orange;
-                _selectedPosition = markPos;
-                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Caution;
+                ApplyPositionSelection(markPos);
                 return true;
             }
             CourseLine? markCourse = GetCourseFromSource(mouse.OriginalSource);
             if (markCourse != null) {
-                markCourse.Line.Stroke = Brushes.Orange;
-                _selectedCourseLine = markCourse;
-                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Caution;
+                ApplyCourseSelection(markCourse);
+                return true;
+            }
+            GuideLine? markGuide = GetGuideFromSource(mouse.OriginalSource);
+            if (markGuide != null && markGuide.Line != null) {
+                markGuide.Line.Stroke = Brushes.OrangeRed;
+                _selectedGuideLine = markGuide;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
                 return true;
             }
             return false;
@@ -452,6 +480,7 @@ namespace marine_nav_trainer.Map {
             _positions.Add(markPos);
             _nextIdPosition++;
             mark.Tag = markPos;
+            RefreshPositionList();
             return true;
         }
 
@@ -542,6 +571,7 @@ namespace marine_nav_trainer.Map {
             _positions.Add(markPos);
             _nextIdPosition++;
             mark.Tag = markPos;
+            RefreshPositionList();
         }
 
         private void SetCourseLine(MouseButtonEventArgs mouse) {
@@ -598,6 +628,32 @@ namespace marine_nav_trainer.Map {
                     }
                 }
                 if (isCourseComplete) {
+                    double? KdD = null;
+                    double? distance = null;
+
+                    if (_isTeacherMode) {
+                        double dx = _currentLine.X2 - _currentLine.X1;
+                        double dy = _currentLine.Y2 - _currentLine.Y1;
+
+                        // kierunek kompasowy wektora, północ = góra mapy
+                        double bearing = RadToDeg(Math.Atan2(dx, -dy));
+                        if (bearing < 0)
+                            bearing += 360;
+
+                        KdD = Math.Round(bearing, 1);
+
+                        // dystans z proporcji mapy: piksele -> geo -> loksodroma Nm (merkator)
+                        var (lat1, lon1) = PixelToGeoCalibrated(_currentLine.X1, _currentLine.Y1);
+                        var (lat2, lon2) = PixelToGeoCalibrated(_currentLine.X2, _currentLine.Y2);
+                        double phi1 = DegToRad(lat1);
+                        double phi2 = DegToRad(lat2);
+                        double dPhi = phi2 - phi1;
+                        double dLambda = DegToRad(lon2 - lon1);
+                        double dPsi = Math.Log(Math.Tan(Math.PI / 4 + phi2 / 2) / Math.Tan(Math.PI / 4 + phi1 / 2));
+                        double q = Math.Abs(dPsi) > 1e-12 ? dPhi / dPsi : Math.Cos(phi1);
+                        distance = Math.Round(Math.Sqrt(dPhi * dPhi + q * q * dLambda * dLambda) * 3440.065, 1);
+                    }
+
                     var course = new CourseLine {
                         Id = _nextIdCourse,
                         StartPosition = _startPosition,
@@ -605,8 +661,8 @@ namespace marine_nav_trainer.Map {
                         StartY = _currentLine.Y1,
                         EndX = _currentLine.X2,
                         EndY = _currentLine.Y2,
-                        CourseOverGround = null, // TODO do dokończenia
-                        CourseCompas = null,
+                        CourseOverGround = KdD,
+                        Distance = distance,
                         Line = _currentLine
                     };
                     if (markPos != null) {
@@ -616,11 +672,79 @@ namespace marine_nav_trainer.Map {
                     _courseLines.Add(course);
                     _nextIdCourse++;
                     _currentLine.IsHitTestVisible = true;
+                    RefreshCourseList();
                 }
                 SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
                 _isCourseMode = false;
                 _currentLine = null;
                 _startPosition = null;
+                _courseDirectionLocked = false;
+            }
+        }
+
+        /////////////////////////////////////////
+
+        private void SetGuideLine(MouseButtonEventArgs mouse) {
+            var markPos = GetMarkPositionFromSource(mouse.OriginalSource);
+            if (!_isDrawingLine) {
+                Point start = mouse.GetPosition(MapCanvas);
+                if (markPos != null) {
+                    start = new Point(markPos.X, markPos.Y);
+                }
+
+                _courseDirectionLocked = false;
+                foreach (var triangle in _navTriangles) {
+                    if (triangle.Visibility == Visibility.Visible &&
+                        triangle.IsAttachedToPoint(start, out Vector dir)) {
+                        _courseDirection = dir;
+                        _courseDirectionLocked = true;
+                        break;
+                    }
+                }
+
+                _isDrawingLine = true;
+                _currentLine = new Line {
+                    X1 = start.X,
+                    Y1 = start.Y,
+                    X2 = start.X,
+                    Y2 = start.Y,
+                    Stroke = Brushes.Gold,
+                    StrokeThickness = 4,
+                    IsHitTestVisible = false
+                };
+                MapCanvas.Children.Add(_currentLine);
+            }
+            else {
+                _isDrawingLine = false;
+                if (_currentLine != null) {
+                    Point end = mouse.GetPosition(MapCanvas);
+
+                    if (_courseDirectionLocked) {
+                        end = ProjectOntoCourseDirection(_currentLine, end);
+                    }
+                    else if (markPos != null) {
+                        end = new Point(markPos.X, markPos.Y);
+                    }
+
+                    _currentLine.X2 = end.X;
+                    _currentLine.Y2 = end.Y;
+
+                    var guide = new GuideLine {
+                        Id = _nextIdGuide,
+                        StartX = _currentLine.X1,
+                        StartY = _currentLine.Y1,
+                        EndX = _currentLine.X2,
+                        EndY = _currentLine.Y2,
+                        Line = _currentLine
+                    };
+                    _currentLine.Tag = guide;
+                    _guideLines.Add(guide);
+                    _nextIdGuide++;
+                    _currentLine.IsHitTestVisible = true;
+                }
+                SetGuideLineButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                _isGuideLineMode = false;
+                _currentLine = null;
                 _courseDirectionLocked = false;
             }
         }
@@ -673,7 +797,7 @@ namespace marine_nav_trainer.Map {
                 foreach (var navTriangle in _navTriangles)
                     navTriangle.Visibility = newVisibility;
                 ToggleNavTrianglesButton.Appearance = anyVisible ? Wpf.Ui.Controls.ControlAppearance.Secondary
-                                                         : Wpf.Ui.Controls.ControlAppearance.Info;
+                                                                 : Wpf.Ui.Controls.ControlAppearance.Info;
                 return;
             }
             double size = 1300;
@@ -710,7 +834,7 @@ namespace marine_nav_trainer.Map {
                 foreach (var navDivider in _navDividers)
                     navDivider.Visibility = newVisibility;
                 ToggleNavDividerButton.Appearance = anyVisible ? Wpf.Ui.Controls.ControlAppearance.Secondary
-                                                         : Wpf.Ui.Controls.ControlAppearance.Info;
+                                                               : Wpf.Ui.Controls.ControlAppearance.Info;
                 return;
             }
             double size = 500;
@@ -732,6 +856,28 @@ namespace marine_nav_trainer.Map {
         private void ToggleEdgesOnClick(object sender, RoutedEventArgs e) {
             ToggleCalibrationLines();
         }
+        private void TogglePointsTabOnClick(object sender, RoutedEventArgs e) {
+            TogglePointsTab();
+        }
+
+        private void TogglePointsTab() {
+            bool isVisible = PositionValuesTab.Visibility != Visibility.Visible;
+            PositionValuesTab.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            TogglePointsTabButton.Appearance = isVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                         : Wpf.Ui.Controls.ControlAppearance.Secondary;
+        }
+
+        private void ToggleCourseTabOnClick(object sender, RoutedEventArgs e) {
+            ToggleCourseTab();
+        }
+
+        private void ToggleCourseTab() {
+            bool isVisible = CourseValuesTab.Visibility != Visibility.Visible;
+            CourseValuesTab.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            ToggleCourseTabButton.Appearance = isVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                         : Wpf.Ui.Controls.ControlAppearance.Secondary;
+        }
+
         private void ResizeMapOnClick(object sender, RoutedEventArgs e) {
             ResizeMapToMainWindow();
         }
@@ -742,7 +888,10 @@ namespace marine_nav_trainer.Map {
             _isMarkMode = !_isMarkMode;
             if (_isCourseMode)
                 SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+            if (_isGuideLineMode)
+                SetGuideLineButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             _isCourseMode = false;
+            _isGuideLineMode = false;
             SetMarkButton.Appearance = _isMarkMode ? Wpf.Ui.Controls.ControlAppearance.Info
                                                    : Wpf.Ui.Controls.ControlAppearance.Secondary;
             ClearSelected();
@@ -751,9 +900,24 @@ namespace marine_nav_trainer.Map {
             _isCourseMode = !_isCourseMode;
             if (_isMarkMode)
                 SetMarkButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+            if (_isGuideLineMode)
+                SetGuideLineButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
             _isMarkMode = false;
+            _isGuideLineMode = false;
             SetCourseButton.Appearance = _isCourseMode ? Wpf.Ui.Controls.ControlAppearance.Info
                                                        : Wpf.Ui.Controls.ControlAppearance.Secondary;
+            ClearSelected();
+        }
+        private void SetGuideOnClick(object sender, RoutedEventArgs e) {
+            _isGuideLineMode = !_isGuideLineMode;
+            if (_isMarkMode)
+                SetMarkButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+            if (_isCourseMode)
+                SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+            _isMarkMode = false;
+            _isCourseMode = false;
+            SetGuideLineButton.Appearance = _isGuideLineMode ? Wpf.Ui.Controls.ControlAppearance.Info
+                                                             : Wpf.Ui.Controls.ControlAppearance.Secondary;
             ClearSelected();
         }
         private void DeleteSelectedOnClick(object sender, RoutedEventArgs e) {
@@ -773,6 +937,308 @@ namespace marine_nav_trainer.Map {
 
         private void SelectMapOnClick(object sender, RoutedEventArgs e) {
             SelectMap();
+        }
+
+        private void SaveTaskOnClick(object sender, RoutedEventArgs e) {
+            SaveTask();
+        }
+        private void LoadTaskOnClick(object sender, RoutedEventArgs e) {
+            LoadTask();
+        }
+
+        // JSON
+        private void SaveTask() {
+            // punkty do solution
+            var trk = _positions.Select((pos, i) => {
+                // czas jako dziś + godzina z pola time (HHMM) - TODO do dokończenia data
+                DateTime today = DateTime.Today;
+                int hh = 0, mm = 0;
+                if (!string.IsNullOrWhiteSpace(pos.Time)) {
+                    string timeText = pos.Time.Trim().PadLeft(4, '0');
+                    int.TryParse(timeText.Substring(0, 2), out hh);
+                    int.TryParse(timeText.Substring(2, 2), out mm);
+                }
+                DateTime time = new DateTime(today.Year, today.Month, today.Day, hh % 24, mm % 60, 0);
+
+                // kurs wychodzący z punktu
+                CourseLine? course = _courseLines.FirstOrDefault(line => line.StartPosition == pos);
+
+                return new {
+                    id = $"trk-{i + 1}",
+                    time = time.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture),
+                    position = new {
+                        lat = Math.Round(pos.Lat, 4),
+                        lon = Math.Round(pos.Lon, 4),
+                        position_txt = $"{DegToDegMin(pos.Lat, true)} {DegToDegMin(pos.Lon, false)}"
+                    },
+                    distance_nm = course?.Distance ?? 0,
+                    log_nm = pos.Log,
+                    course_compass_deg = course?.CourseCompas ?? 0,
+                    course_true_deg = 0.0,                                            // TODO dodać do formatki
+                    course_over_ground_deg = course?.CourseOverGround ?? 0,
+                    speed_kn = course?.Velocity ?? 0
+                };
+            }).ToList();
+
+            // Plik Json'a
+            var task = new {
+                task = new {
+                    chart = new {
+                        file_name = Path.GetFileName(_currentMapPath),
+                        bounds = new {
+                            north_lat_deg = Math.Round(LatTop, 4),
+                            south_lat_deg = Math.Round(LatBottom, 4),
+                            west_lon_deg = Math.Round(LonLeft, 4),
+                            east_lon_deg = Math.Round(LonRight, 4)
+                        },
+                        margins = new {
+                            top = Math.Round(MarginTop, 4),
+                            bottom = Math.Round(MarginBottom, 4),
+                            left = Math.Round(MarginLeft, 4),
+                            right = Math.Round(MarginRight, 4)
+                        }
+                    }
+                },
+                solution = new {
+                    trk = trk,
+                    comment = ""
+                }
+            };
+
+            // TODO - TEMP Title do zapisu + nadpisanie
+            try {
+                Directory.CreateDirectory(JsonsDir);
+
+                // pierwsza wolna nazwa zad_01.json, zad_02.json - test
+                int index = 1;
+                string path;
+                do {
+                    path = Path.Combine(JsonsDir, $"zad_{index:00}.json");
+                    index++;
+                } while (File.Exists(path));
+
+                string json = JsonSerializer.Serialize(task, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(path, json);
+
+                MessageBox.Show(
+                    $"Zapisano zadanie jako \"{Path.GetFileName(path)}\".",
+                    "Zapis zadania",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się zapisać zadania:\n{ex.Message}",
+                    "Błąd zapisu zadania",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void LoadTask() {
+            var dialog = new TaskSelectionWindow(JsonsDir) {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (dialog.ShowDialog() != true || dialog.SelectedTaskPath == null)
+                return;
+
+            string mapFile, taskPath, fileName;
+            double boundNorth, boundSouth, boundWest, boundEast, marginTop, marginBottom, marginLeft, marginRight;
+            var trkPosition = new List<(double lat, double lon, DateTime date, string? time, double? log,
+                                        double distance, double kk, double kdd, double speed)>();
+
+            taskPath = dialog.SelectedTaskPath;
+            fileName = Path.GetFileName(taskPath);
+            try {
+                using var jsonFile = JsonDocument.Parse(File.ReadAllText(taskPath));
+                var chart = jsonFile.RootElement.GetProperty("task").GetProperty("chart");
+
+                mapFile = chart.GetProperty("file_name").GetString() ?? string.Empty;
+
+                var bounds = chart.GetProperty("bounds");
+                boundNorth = bounds.GetProperty("north_lat_deg").GetDouble();
+                boundSouth = bounds.GetProperty("south_lat_deg").GetDouble();
+                boundWest = bounds.GetProperty("west_lon_deg").GetDouble();
+                boundEast = bounds.GetProperty("east_lon_deg").GetDouble();
+
+                var margins = chart.GetProperty("margins");
+                marginTop = margins.GetProperty("top").GetDouble();
+                marginBottom = margins.GetProperty("bottom").GetDouble();
+                marginLeft = margins.GetProperty("left").GetDouble();
+                marginRight = margins.GetProperty("right").GetDouble();
+
+                if (jsonFile.RootElement.TryGetProperty("solution", out var solution)) {
+                    solution.TryGetProperty("trk", out var trk);
+
+                    if (trk.ValueKind == JsonValueKind.Array) {
+                        foreach (var trkElement in trk.EnumerateArray()) {
+                            var position = trkElement.GetProperty("position");
+                            double lat = position.GetProperty("lat").GetDouble();
+                            double lon = position.GetProperty("lon").GetDouble();
+
+                            // czas ISO -> data + godzina - string HHMM
+                            DateTime date = DateTime.Today;
+                            string? time = null;
+                            if (trkElement.TryGetProperty("time", out var timeElement)) {
+                                if (timeElement.ValueKind == JsonValueKind.String) {
+                                    bool isTimeParsed = DateTime.TryParse(
+                                        timeElement.GetString(),
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                                        out var timeStamp);
+
+                                    if (isTimeParsed) {
+                                        date = timeStamp.Date;
+                                        time = timeStamp.ToString("HHmm", CultureInfo.InvariantCulture);
+                                    }
+                                }
+                            }
+
+                            double? log = null;
+                            if (trkElement.TryGetProperty("log_nm", out var logElement)) {
+                                if (logElement.ValueKind == JsonValueKind.Number)
+                                    log = logElement.GetDouble();
+                            }
+
+                            double distance = ReadNumber(trkElement, "distance_nm");
+                            double kk = ReadNumber(trkElement, "course_compass_deg");
+                            double kdd = ReadNumber(trkElement, "course_over_ground_deg");
+                            double speed = ReadNumber(trkElement, "speed_kn");
+
+                            trkPosition.Add((lat, lon, date, time, log, distance, kk, kdd, speed));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się odczytać pliku zadania \"{fileName}\":\n{ex.Message}!",
+                    "Błąd wczytywania zadania",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // Mapa
+            string mapPath = Path.Combine(MapsDir, mapFile);
+            if (!File.Exists(mapPath)) {
+                MessageBox.Show(
+                    $"Aby wczytać zadanie: '{fileName}' należy zaimportować mapę: '{mapFile}'.",
+                    "Brak wymaganej mapy",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            try {
+                ClearMap();
+                LatTop = boundNorth;
+                LatBottom = boundSouth;
+                LonLeft = boundWest;
+                LonRight = boundEast;
+                MarginTop = marginTop;
+                MarginBottom = marginBottom;
+                MarginLeft = marginLeft;
+                MarginRight = marginRight;
+
+                LoadPdfMap(mapPath, resetMargins: false);
+                ResizeMapToMainWindow();
+                InitMapBoundsInputs();
+
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się wczytać trasy \"{mapFile}\":\n{ex.Message}",
+                    "Błąd wczytywania mapy",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // wstawianie punktów
+            List<Position?> placedPositions = new List<Position?>();
+            try {
+                foreach (var x in trkPosition) {
+                    if (TryInsertPoint(x.lat, x.lon)) {
+                        Position pos = _positions[^1];
+                        pos.Time = x.time;
+                        pos.Log = x.log;
+                        placedPositions.Add(pos);
+                    }
+                    else {
+                        placedPositions.Add(null);
+                    }
+                }
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się wczytać punktów z zadania \"{fileName}\":\n{ex.Message}",
+                    "Błąd wczytywania mapy",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // wstawianie lini kursów
+            try {
+                for (int i = 0; i < trkPosition.Count; i++) {
+                    Position? start = placedPositions[i];
+                    double distance = trkPosition[i].distance;
+                    if (start == null || distance <= 0)
+                        continue;
+
+                    // koniec loksodromy z punktu startu wg kierunku KdD i dystansu
+                    double bearing = DegToRad(trkPosition[i].kdd);
+                    double angDist = distance / 3440.065;                // dystans kątowy -  rad
+                    double phi1 = DegToRad(start.Lat);
+                    double dPhi = angDist * Math.Cos(bearing);
+                    double phi2 = phi1 + dPhi;
+                    double dPsi = Math.Log(Math.Tan(Math.PI / 4 + phi2 / 2) / Math.Tan(Math.PI / 4 + phi1 / 2));
+                    double q = Math.Abs(dPsi) > 1e-12 ? dPhi / dPsi : Math.Cos(phi1);
+                    double lat2 = RadToDeg(phi2);
+                    double lon2 = start.Lon + RadToDeg(angDist * Math.Sin(bearing) / q);
+
+                    var (endX, endY) = GeoToPixelCalibrated(lat2, lon2);
+
+                    var line = new Line {
+                        X1 = start.X,
+                        Y1 = start.Y,
+                        X2 = endX,
+                        Y2 = endY,
+                        Stroke = Brushes.Blue,
+                        StrokeThickness = 4,
+                        IsHitTestVisible = true
+                    };
+                    MapCanvas.Children.Add(line);
+
+                    var course = new CourseLine {
+                        Id = _nextIdCourse,
+                        StartPosition = start,
+                        StartX = start.X,
+                        StartY = start.Y,
+                        EndX = endX,
+                        EndY = endY,
+                        CourseCompas = trkPosition[i].kk,
+                        CourseOverGround = trkPosition[i].kdd,
+                        Distance = distance,
+                        Velocity = trkPosition[i].speed,
+                        Line = line
+                    };
+                    line.Tag = course;
+                    _courseLines.Add(course);
+                    _nextIdCourse++;
+                }
+                RefreshCourseList();
+            }
+            catch (Exception ex) {
+                MessageBox.Show(
+                    $"Nie udało się wczytać trasy z zadania \"{fileName}\":\n{ex.Message}",
+                    "Błąd wczytywania mapy",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
         }
 
         private void SelectMap() {
@@ -889,6 +1355,12 @@ namespace marine_nav_trainer.Map {
                     MapCanvas.Children.Remove(course.Line);
                 }
             }
+            foreach (var guide in _guideLines) {
+                if (guide.Line != null) {
+                    guide.Line.Tag = null;
+                    MapCanvas.Children.Remove(guide.Line);
+                }
+            }
             foreach (var triangle in _navTriangles) {
                 MapCanvas.Children.Remove(triangle);
             }
@@ -900,17 +1372,29 @@ namespace marine_nav_trainer.Map {
 
             _positions.Clear();
             _courseLines.Clear();
+            _guideLines.Clear();
             _navTriangles.Clear();
             _navDividers.Clear();
 
+            _nextIdPosition = 0;
+            _nextIdCourse = 0;
+            _nextIdGuide = 0;
+
             _selectedPosition = null;
             _selectedCourseLine = null;
+            _selectedGuideLine = null;
             _currentLine = null;
             _startPosition = null;
             _isDrawingLine = false;
             _courseDirectionLocked = false;
             _isMarkMode = false;
             _isCourseMode = false;
+            _isGuideLineMode = false;
+
+            RefreshPositionList();
+            ShowPositionDetails(null);
+            RefreshCourseList();
+            ShowCourseDetails(null);
 
             MapImage.Source = null;
             MapScale.ScaleX = 1;
@@ -934,6 +1418,15 @@ namespace marine_nav_trainer.Map {
         private static double ContentExtent(double extent)
             => double.IsNaN(extent) || extent <= 0 ? double.PositiveInfinity : extent;
 
+        private static double ReadNumber(JsonElement element, string name) {
+            if (element.TryGetProperty(name, out var value)) {
+                if (value.ValueKind == JsonValueKind.Number)
+                    return value.GetDouble();
+            }
+
+            return 0;
+        }
+
 
         // inne        
         private Position? GetMarkPositionFromSource(object source) {
@@ -954,6 +1447,15 @@ namespace marine_nav_trainer.Map {
             }
             return null;
         }
+        private GuideLine? GetGuideFromSource(object source) {
+            DependencyObject? current = source as DependencyObject;
+            while (current != null) {
+                if (current is FrameworkElement fe && fe.Tag is GuideLine guide)
+                    return guide;
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
         private Point GetVisibleCenter() {
             double centerX = MapScrollViewer.HorizontalOffset + MapScrollViewer.ViewportWidth / 2;
             double centerY = MapScrollViewer.VerticalOffset + MapScrollViewer.ViewportHeight / 2;
@@ -969,9 +1471,8 @@ namespace marine_nav_trainer.Map {
                 if (_selectedPosition.Mark != null) {
                     MapCanvas.Children.Remove(_selectedPosition.Mark);
                 }
-                List<CourseLine>? toRemove =
-                    _courseLines.Where(course => course.StartPosition == _selectedPosition ||
-                    course.EndPosition == _selectedPosition).ToList();
+                List<CourseLine>? toRemove = _courseLines.Where(course => course.StartPosition == _selectedPosition ||
+                                             course.EndPosition == _selectedPosition).ToList(); // TODO ten or do skasowania jak przestane wiązać endPosition
                 foreach (CourseLine course in toRemove) {
                     if (course.Line != null)
                         MapCanvas.Children.Remove(course.Line);
@@ -981,6 +1482,11 @@ namespace marine_nav_trainer.Map {
                 _selectedPosition.Mark = null;
                 _selectedPosition = null;
                 DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                RefreshPositionList();
+                ShowPositionDetails(null);
+                RefreshCourseList();
+                if (_selectedCourseLine == null)
+                    ShowCourseDetails(null);
                 return;
             }
             if (_selectedCourseLine != null) {
@@ -991,8 +1497,349 @@ namespace marine_nav_trainer.Map {
                 _selectedCourseLine.Line = null;
                 _selectedCourseLine = null;
                 DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                RefreshCourseList();
+                ShowCourseDetails(null);
                 return;
             }
+            if (_selectedGuideLine != null) {
+                if (_selectedGuideLine.Line != null) {
+                    MapCanvas.Children.Remove(_selectedGuideLine.Line);
+                }
+                _guideLines.Remove(_selectedGuideLine);
+                _selectedGuideLine.Line = null;
+                _selectedGuideLine = null;
+                DeleteSelectedButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                return;
+            }
+        }
+
+        // Zakładka punktów pozycji
+        private void ApplyPositionSelection(Position? pos) {
+            _isSyncingSelection = true;
+            try {
+                if (_selectedPosition?.Mark != null)
+                    _selectedPosition.Mark.Color = Brushes.Blue;
+
+                _selectedPosition = pos;
+
+                if (pos?.Mark != null)
+                    pos.Mark.Color = Brushes.OrangeRed;
+
+                PositionList.SelectedItem = FindListItem(pos);
+                DeletePositionButton.IsEnabled = pos != null;
+                DeletePositionButton.Appearance = DeletePositionButton.IsEnabled ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                                                 : Wpf.Ui.Controls.ControlAppearance.Secondary;
+                DeleteSelectedButton.Appearance = pos != null ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                              : Wpf.Ui.Controls.ControlAppearance.Secondary;
+                UpdatePositionMoveButtons();
+
+                ShowPositionDetails(pos);
+            }
+            finally {
+                _isSyncingSelection = false;
+            }
+        }
+
+        private void RefreshPositionList() {
+            _isSyncingSelection = true;
+            try {
+                PositionList.Items.Clear();
+                foreach (var pos in _positions) {
+                    PositionList.Items.Add(new ListBoxItem {
+                        Content = string.IsNullOrWhiteSpace(pos.Label) ? $"P{pos.Id}" : pos.Label,
+                        Tag = pos
+                    });
+                }
+
+                PositionList.SelectedItem = FindListItem(_selectedPosition);
+
+                DeletePositionButton.IsEnabled = _selectedPosition != null;
+                DeletePositionButton.Appearance = DeletePositionButton.IsEnabled ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                                                 : Wpf.Ui.Controls.ControlAppearance.Secondary;
+                UpdatePositionMoveButtons();
+            }
+            finally {
+                _isSyncingSelection = false;
+            }
+        }
+
+        private ListBoxItem? FindListItem(Position? pos) {
+            if (pos == null)
+                return null;
+
+            foreach (ListBoxItem item in PositionList.Items)
+                if (ReferenceEquals(item.Tag, pos))
+                    return item;
+
+            return null;
+        }
+
+        private void ShowPositionDetails(Position? pos) {
+            if (pos == null) {
+                PositionDetailPanel.IsEnabled = false;
+                PosIdText.Text = string.Empty;
+                PosLabelBox.Text = string.Empty;
+                PosLatText.Text = string.Empty;
+                PosLonText.Text = string.Empty;
+                PosTimeBox.Text = string.Empty;
+                PosLogBox.Value = null;
+
+                return;
+            }
+
+            PositionDetailPanel.IsEnabled = true;
+            PosIdText.Text = pos.Id.ToString();
+            PosLabelBox.Text = pos.Label ?? string.Empty;
+            PosLatText.Text = DegToDegMin(pos.Lat, isLat: true);
+            PosLonText.Text = DegToDegMin(pos.Lon, isLat: false);
+            PosTimeBox.Text = pos.Time ?? string.Empty;
+            PosLogBox.Value = pos.Log;
+        }
+
+        private void PositionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (_isSyncingSelection)
+                return;
+
+            var pos = (PositionList.SelectedItem as ListBoxItem)?.Tag as Position;
+
+            if (_selectedCourseLine != null)
+                ApplyCourseSelection(null);
+
+            DeselectGuide();
+            ApplyPositionSelection(pos);
+        }
+
+        private void DeletePositionOnClick(object sender, RoutedEventArgs e) {
+            if (_selectedPosition != null)
+                RemoveSelectedObject();
+        }
+
+        private void MovePositionUpOnClick(object sender, RoutedEventArgs e) {
+            MoveSelectedPosition(-1);
+        }
+        private void MovePositionDownOnClick(object sender, RoutedEventArgs e) {
+            MoveSelectedPosition(1);
+        }
+
+        // strzałki zmiany ID
+        private void MoveSelectedPosition(int direction) {
+            if (_selectedPosition == null)
+                return;
+            int i = _positions.IndexOf(_selectedPosition);
+            int j = i + direction;
+            if (i < 0 || j < 0 || j >= _positions.Count)
+                return;
+
+            Position posA = _positions[i];
+            Position posB = _positions[j];
+
+            int idA = posA.Id;
+            int idB = posB.Id;
+            posA.Id = idB;
+            posB.Id = idA;
+
+            // zmiana puste/domy labele
+            if (posA.Label == $"P{idA}")
+                posA.Label = $"P{posA.Id}";
+
+            if (posB.Label == $"P{idB}")
+                posB.Label = $"P{posB.Id}";
+
+            _positions[i] = posB;
+            _positions[j] = posA;
+
+            RefreshPositionList();
+            _isSyncingSelection = true;
+
+            try {
+                ShowPositionDetails(_selectedPosition);
+            }
+            finally {
+                _isSyncingSelection = false;
+            }
+        }
+
+        // strzałki aktywne ino jak jest kaj przesunąć wybrany punkt
+        private void UpdatePositionMoveButtons() {
+            int i = _selectedPosition == null ? -1 : _positions.IndexOf(_selectedPosition);
+
+            MovePositionUpButton.IsEnabled = i > 0;
+            MovePositionDownButton.IsEnabled = i >= 0 && i < _positions.Count - 1;
+        }
+
+        private void DeselectGuide() {
+            if (_selectedGuideLine?.Line != null) {
+                _selectedGuideLine.Line.Stroke = Brushes.Gold;
+                _selectedGuideLine = null;
+            }
+        }
+
+        private void PosLabel_TextChanged(object sender, TextChangedEventArgs e) {
+            if (_isSyncingSelection || _selectedPosition == null)
+                return;
+
+            _selectedPosition.Label = PosLabelBox.Text;
+
+            var item = FindListItem(_selectedPosition);
+            if (item != null)
+                item.Content = string.IsNullOrWhiteSpace(_selectedPosition.Label) ? $"P{_selectedPosition.Id}" : _selectedPosition.Label;
+        }
+
+        // HHMM
+        private void PosTime_TextChanged(object sender, TextChangedEventArgs e) {
+            if (_isSyncingSelection || _selectedPosition == null)
+                return;
+
+            string digits = new string(PosTimeBox.Text.Where(char.IsDigit).ToArray());
+            if (digits != PosTimeBox.Text) {
+                int caret = PosTimeBox.SelectionStart;
+                PosTimeBox.Text = digits;                       // odpala handler ponownie
+                PosTimeBox.SelectionStart = Math.Min(caret, digits.Length);
+
+                return;
+            }
+            _selectedPosition.Time = digits.Length == 0 ? "0000" : digits;
+        }
+
+        private void PosLog_TextChanged(object sender, TextChangedEventArgs e) {
+            if (_isSyncingSelection || _selectedPosition == null)
+                return;
+
+            _selectedPosition.Log = TryParseBound(PosLogBox.Text, out double v) ? Math.Round(v, 1) : null;
+        }
+
+        // Zakładka linii kursów
+        private void ApplyCourseSelection(CourseLine? course) {
+            _isSyncingSelection = true;
+            try {
+                if (_selectedCourseLine?.Line != null)
+                    _selectedCourseLine.Line.Stroke = Brushes.Blue;
+
+                _selectedCourseLine = course;
+
+                if (course?.Line != null)
+                    course.Line.Stroke = Brushes.OrangeRed;
+
+                CourseList.SelectedItem = FindCourseListItem(course);
+                DeleteCourseButton.IsEnabled = course != null;
+                DeleteCourseButton.Appearance = course != null ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                               : Wpf.Ui.Controls.ControlAppearance.Secondary;
+                DeleteSelectedButton.Appearance = course != null ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                                 : Wpf.Ui.Controls.ControlAppearance.Secondary;
+
+                ShowCourseDetails(course);
+            }
+            finally {
+                _isSyncingSelection = false;
+            }
+        }
+
+        private void RefreshCourseList() {
+            _isSyncingSelection = true;
+
+            try {
+                CourseList.Items.Clear();
+                foreach (var course in _courseLines) {
+                    CourseList.Items.Add(new ListBoxItem {
+                        Content = $"K{course.Id}",
+                        Tag = course
+                    });
+                }
+
+                CourseList.SelectedItem = FindCourseListItem(_selectedCourseLine);
+                DeleteCourseButton.IsEnabled = _selectedCourseLine != null;
+                DeleteCourseButton.Appearance = DeleteCourseButton.IsEnabled ? Wpf.Ui.Controls.ControlAppearance.Danger
+                                                                             : Wpf.Ui.Controls.ControlAppearance.Secondary;
+            }
+            finally {
+                _isSyncingSelection = false;
+            }
+        }
+
+        private ListBoxItem? FindCourseListItem(CourseLine? course) {
+            if (course == null)
+                return null;
+
+            foreach (ListBoxItem item in CourseList.Items) {
+                if (ReferenceEquals(item.Tag, course))
+                    return item;
+            }
+            return null;
+        }
+
+        // panel edycji kursu
+        private void ShowCourseDetails(CourseLine? course) {
+            if (course == null) {
+                CourseDetailPanel.IsEnabled = false;
+                CourseIdText.Text = string.Empty;
+                CourseKKBox.Value = null;
+                CourseKdDBox.Value = null;
+                CourseVelocityBox.Value = null;
+                CourseDistanceBox.Value = null;
+                CourseTrueWindBox.Value = null;
+                CourseAppWindBox.Value = null;
+
+                return;
+            }
+
+            CourseDetailPanel.IsEnabled = true;
+            CourseIdText.Text = course.Id.ToString();
+            CourseKKBox.Value = course.CourseCompas;
+            CourseKdDBox.Value = course.CourseOverGround;
+            CourseVelocityBox.Value = course.Velocity;
+            CourseDistanceBox.Value = course.Distance;
+            CourseTrueWindBox.Value = course.TrueWindHeading;
+            CourseAppWindBox.Value = course.AppWindHeading;
+        }
+
+        private void CourseList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (_isSyncingSelection)
+                return;
+
+            var course = (CourseList.SelectedItem as ListBoxItem)?.Tag as CourseLine;
+
+            if (_selectedPosition != null)
+                ApplyPositionSelection(null);
+
+            DeselectGuide();
+            ApplyCourseSelection(course);
+        }
+
+        private void DeleteCourseOnClick(object sender, RoutedEventArgs e) {
+            if (_selectedCourseLine != null)
+                RemoveSelectedObject();
+        }
+
+        // jeden handler - testy
+        private void CourseField_TextChanged(object sender, TextChangedEventArgs e) {
+            if (_isSyncingSelection || _selectedCourseLine == null)
+                return;
+
+            if (sender == CourseKKBox) {
+                _selectedCourseLine.CourseCompas = ReadOptionalNumber(CourseKKBox);
+            }
+            else if (sender == CourseKdDBox) {
+                _selectedCourseLine.CourseOverGround = ReadOptionalNumber(CourseKdDBox);
+            }
+            else if (sender == CourseVelocityBox) {
+                _selectedCourseLine.Velocity = ReadOptionalNumber(CourseVelocityBox);
+            }
+            else if (sender == CourseDistanceBox) {
+                _selectedCourseLine.Distance = ReadOptionalNumber(CourseDistanceBox);
+            }
+            else if (sender == CourseTrueWindBox) {
+                _selectedCourseLine.TrueWindHeading = ReadOptionalNumber(CourseTrueWindBox);
+            }
+            else if (sender == CourseAppWindBox) {
+                _selectedCourseLine.AppWindHeading = ReadOptionalNumber(CourseAppWindBox);
+            }
+        }
+
+        private double? ReadOptionalNumber(Wpf.Ui.Controls.NumberBox box) {
+            if (TryParseBound(box.Text, out double v))
+                return Math.Round(v, 1);
+
+            return null;
         }
 
         private void UpdateMarginInputsFromEdges() {

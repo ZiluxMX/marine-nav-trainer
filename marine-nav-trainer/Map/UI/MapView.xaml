@@ -24,45 +24,70 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
 
-                        <ui:TextBlock Text="Panel sterowania"                              
-                                      FontSize="16"                   
-                                      VerticalAlignment="Center"      
-                                      Margin="4,0,4,0"/>
+                    <ui:TextBlock Text="Panel sterowania"                              
+                                    FontSize="16"                   
+                                    VerticalAlignment="Center"      
+                                    Margin="4,0,4,0"/>
 
-                        <ui:Button x:Name="ToggleEdgesButton"
-                                   Content="Krawędzie mapy"
-                                   Margin="4,0,4,0"
-                                   Appearance="Info"
-                                   Click="ToggleEdgesOnClick"/>
+                    <ui:Button x:Name="ToggleEdgesButton"
+                                Content="Krawędzie mapy"
+                                Margin="4,0,4,0"
+                                Appearance="Info"
+                                Click="ToggleEdgesOnClick"/>
 
-                        <ui:Button Content="Resetuj przybliżenie"
-                                   Margin="4,0,4,0"
-                                   Appearance="Secondary"
-                                   Click="ResizeMapOnClick"/>
-                        <!-- 
+                    <ui:Button Content="Resetuj przybliżenie"
+                                Margin="4,0,4,0"
+                                Appearance="Secondary"
+                                Click="ResizeMapOnClick"/>
+                    <!-- 
                         <ui:Button Content="Motyw"
                                Margin="4,0,4,0"
                                Click="ToggleThermeOnClick"/>
                     -->
-
+                    <!--
                         <ui:Button x:Name="DeleteSelectedButton"
                                    Content="Usuń zaznaczone"
                                    Margin="4,0,4,0"
                                    Appearance="Secondary"
                                    Click="DeleteSelectedOnClick"/>
-
-                        <!--
+-->
+                    <!-- PositionValuesTab
                     <ui:Button Content="Czyść mapę"
                                Margin="4,0,4,0"
                                Appearance="Secondary"
                                Click="ClearOnClick"/>
                     -->
-                        <ui:Button x:Name="SelectMapButton"
-                                   Content="Wybierz mapę"
-                                   Margin="4,0,4,0"
-                                   Appearance="Danger"
-                                   Click="SelectMapOnClick"/>
-                    </StackPanel>
+                    <ui:Button x:Name="TogglePointsTabButton"
+                               Content="Lista punktów"
+                               Margin="4,0,4,0"
+                               Appearance="Secondary"
+                               Click="TogglePointsTabOnClick"/>
+
+                    <ui:Button x:Name="ToggleCourseTabButton"
+                               Content="Lista kursów"
+                               Margin="4,0,4,0"
+                               Appearance="Secondary"
+                               Click="ToggleCourseTabOnClick"/>
+
+                    <ui:Button x:Name="SelectMapButton"
+                                Content="Wybierz mapę"
+                                Margin="4,0,4,0"
+                                Appearance="Danger"
+                                Click="SelectMapOnClick"/>
+
+                    <ui:Button x:Name="SaveTaskButton"
+                               Content="Zapisz zadanie"
+                               Margin="4,0,4,0"
+                               Appearance="Success"
+                               Click="SaveTaskOnClick"/>
+
+                    <ui:Button x:Name="LoadTaskButton"
+                               Content="Wczytaj zadanie"
+                               Margin="4,0,4,0"
+                               Appearance="Success"
+                               Click="LoadTaskOnClick"/>
+
+                </StackPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">
                     <ui:TextBlock x:Name="CoordsText"/>
@@ -74,10 +99,12 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <!-- Panel boczny -->
-            <ui:Card Grid.Column="0" 
-                     Padding="8,2,8,2" 
+            <ui:Card Grid.Column="0"
+                     Padding="8,2,8,2"
                      VerticalAlignment="Top"
                      HorizontalAlignment="Left">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Top">
@@ -106,6 +133,32 @@
                                Click="SetCourseOnClick">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Line24"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button x:Name="SetGuideLineButton"
+                               ToolTip="Linia pomocnicza"
+                               ToolTipService.Placement="Right"
+                               ToolTipService.InitialShowDelay="700"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="SetGuideOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="LineDashes24"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button x:Name="DeleteSelectedButton"
+                               ToolTip="Usuń zaznaczone"
+                               ToolTipService.Placement="Right"
+                               ToolTipService.InitialShowDelay="700"
+                               Margin="0,4,0,4"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Appearance="Secondary"
+                               Click="DeleteSelectedOnClick">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="delete24"/>
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button x:Name="ToggleNavTrianglesButton"
@@ -186,8 +239,272 @@
                     </Canvas>
                 </Grid>
             </ScrollViewer>
-            <Border x:Name="BorderValueTab" Grid.Column="2" 
-                    Padding="8,2,8,2" 
+            <!-- Punkty i linie kursów -->
+            <Border x:Name="PositionValuesTab" Grid.Column="2"
+                    MinWidth="70"
+                    Padding="8,2,8,2"
+                    BorderThickness="1,1,1,1"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <!-- Lista punktów -->
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Padding="5,5,5,5"
+                                BorderThickness="0,0,0,1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            HorizontalAlignment="Center">
+                                    <ui:TextBlock Text="Lista punktów" FontTypography="Subtitle"
+                                                  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ListBox x:Name="PositionList" Grid.Row="1"
+                                 Margin="0,4,0,0"
+                                 SelectionMode="Single"
+                                 SelectionChanged="PositionList_SelectionChanged"
+                                 d:ItemsSource="{d:SampleData ItemCount=5}"/>
+                        <!-- Strzałki -->
+                        <Grid Grid.Row="2" Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:Button x:Name="MovePositionUpButton" Grid.Column="0"
+                                       ToolTip="W górę"
+                                       HorizontalAlignment="Stretch"
+                                       HorizontalContentAlignment="Center"
+                                       Appearance="Secondary"
+                                       IsEnabled="False"
+                                       Click="MovePositionUpOnClick">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="chevronUp24"/>
+                                </ui:Button.Icon>
+                                <!-- ArrowUp24 / caretUp24 / chevronUp48 -->
+                            </ui:Button>
+                            <ui:Button x:Name="MovePositionDownButton" Grid.Column="2"
+                                       ToolTip="W dół"
+                                       HorizontalAlignment="Stretch"
+                                       HorizontalContentAlignment="Center"
+                                       Appearance="Secondary"
+                                       IsEnabled="False"
+                                       Click="MovePositionDownOnClick">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="chevronDown24"/>
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </Grid>
+                        <ui:Button x:Name="DeletePositionButton" Grid.Row="3"
+                                   Margin="0,4,0,0"
+                                   HorizontalAlignment="Stretch"
+                                   HorizontalContentAlignment="Center"
+                                   Appearance="Secondary"
+                                   IsEnabled="False"
+                                   Content="Usuń punkt"
+                                   Click="DeletePositionOnClick">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="Delete24"/>
+                            </ui:Button.Icon>
+                        </ui:Button>
+                    </Grid>
+                    <Border Grid.Row="1"
+                            Margin="0,6,0,0"
+                            VerticalAlignment="Bottom"
+                            Padding="5,5,5,5"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="PositionDetailPanel" IsEnabled="False">
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Id:" VerticalAlignment="Center"/>
+                                    <ui:TextBlock x:Name="PosIdText" Grid.Column="2"
+                                                  VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <ui:TextBlock Text="Etykieta" Margin="0,6,0,0"/>
+                                <ui:TextBox x:Name="PosLabelBox" Margin="0,2,0,0"
+                                            Padding="8,4,8,4"
+                                            TextChanged="PosLabel_TextChanged"/>
+
+                                <ui:TextBlock Text="Szerokość (φ)" Margin="0,6,0,0"/>
+                                <ui:TextBlock x:Name="PosLatText" Margin="0,2,0,0"                                              
+                                              Padding="8,4,8,4"
+                                              TextWrapping="Wrap"/>
+
+                                <ui:TextBlock Text="Długość (λ)" Margin="0,6,0,0"/>
+                                <ui:TextBlock x:Name="PosLonText" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              TextWrapping="Wrap"/>
+
+                                <ui:TextBlock Text="Godzina" Margin="0,6,0,0"/>
+                                <ui:TextBox x:Name="PosTimeBox" Margin="0,2,0,0"
+                                            Padding="8,4,8,4"
+                                            MaxLength="4"
+                                            PlaceholderText="HHMM"
+                                            TextChanged="PosTime_TextChanged"/>
+
+                                <ui:TextBlock Text="Log (Nm)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="PosLogBox" Margin="0,2,0,4"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Inline"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0"
+                                              PlaceholderText="Nm"
+                                              TextChanged="PosLog_TextChanged"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+            <!-- Lista kursów -->
+            <Border x:Name="CourseValuesTab" Grid.Column="3"
+                    MinWidth="70"
+                    Padding="8,2,8,2"
+                    BorderThickness="1,1,1,1"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <!-- Lista kursów -->
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Padding="5,5,5,5"
+                                BorderThickness="0,0,0,1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            HorizontalAlignment="Center">
+                                    <ui:TextBlock Text="Lista kursów" FontTypography="Subtitle"
+                                                  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ListBox x:Name="CourseList" Grid.Row="1"
+                                 Margin="0,4,0,0"
+                                 SelectionMode="Single"
+                                 SelectionChanged="CourseList_SelectionChanged" d:ItemsSource="{d:SampleData ItemCount=5}"/>
+                        <ui:Button x:Name="DeleteCourseButton" Grid.Row="2"
+                                   Margin="0,4,0,0"
+                                   HorizontalAlignment="Stretch"
+                                   HorizontalContentAlignment="Center"
+                                   Appearance="Secondary"
+                                   IsEnabled="False"
+                                   Content="Usuń kurs"
+                                   Click="DeleteCourseOnClick">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="Delete24"/>
+                            </ui:Button.Icon>
+                        </ui:Button>
+                    </Grid>
+                    <Border Grid.Row="1"
+                            Margin="0,6,0,0"
+                            VerticalAlignment="Bottom"
+                            Padding="5,5,5,5"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="CourseDetailPanel" IsEnabled="False">
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Id:" VerticalAlignment="Center"/>
+                                    <ui:TextBlock x:Name="CourseIdText" Grid.Column="2"
+                                                  VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <ui:TextBlock Text="KK (°)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseKKBox" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0" Maximum="360"
+                                              PlaceholderText="°"
+                                              TextChanged="CourseField_TextChanged"/>
+
+                                <ui:TextBlock Text="KdD (°)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseKdDBox" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0" Maximum="360"
+                                              PlaceholderText="°"
+                                              TextChanged="CourseField_TextChanged"/>
+
+                                <ui:TextBlock Text="Prędkość (kn)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseVelocityBox" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0"
+                                              PlaceholderText="kn"
+                                              TextChanged="CourseField_TextChanged"/>
+
+                                <ui:TextBlock Text="Dystans (Mm)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseDistanceBox" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0"
+                                              PlaceholderText="Mm"
+                                              TextChanged="CourseField_TextChanged"/>
+
+                                <ui:TextBlock Text="Wiatr rzeczywisty (°)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseTrueWindBox" Margin="0,2,0,0"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0" Maximum="360"
+                                              PlaceholderText="°"
+                                              TextChanged="CourseField_TextChanged"/>
+
+                                <ui:TextBlock Text="Wiatr pozorny (°)" Margin="0,6,0,0"/>
+                                <ui:NumberBox x:Name="CourseAppWindBox" Margin="0,2,0,4"
+                                              Padding="8,4,8,4"
+                                              SpinButtonPlacementMode="Hidden"
+                                              ClearButtonEnabled="False"
+                                              MaxDecimalPlaces="1"
+                                              Minimum="0" Maximum="360"
+                                              PlaceholderText="°"
+                                              TextChanged="CourseField_TextChanged"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+            <!-- Granice mapy -->
+            <Border x:Name="BorderValueTab" Grid.Column="4"
+                    Padding="8,2,8,2"
                     BorderThickness="1,1,1,1"
                     BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">

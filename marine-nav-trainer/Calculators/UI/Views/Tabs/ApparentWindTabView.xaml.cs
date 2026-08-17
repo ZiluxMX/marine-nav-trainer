@@ -14,9 +14,12 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         private readonly ICalculator<ApparentWindInput, ApparentWindResult> _apparentWindCalc;
         private const double LineLengthRatio = 0.72;
         private const double PointDistanceRatio = 0.98;
-        private const double AnglePointSize = 10;
-        private const double AnglePointOutlineThickness = 1;
-        private Brush AnglePointOutlineBrush = Brushes.Black;
+
+        private const double ApparentAngleLineDistanceRatio = 0.98;
+        private const double RelativeAngleLineDistanceRatio = 1.02;
+        private const double AngleLineThickness = 3;
+        private const double AngleLineOutlineThickness = 1;
+        private Brush AngleLineOutlineBrush = Brushes.Black;
 
         private const double ArrowAngleDeg = 30;
         private const double ArrowLength = 10;
@@ -31,7 +34,8 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
         //private double RelativeWindLineLength;
         private Brush BoatHeadingLineBrush = Brushes.Red;
         private Brush WindDirectionLineBrush = Brushes.Blue;
-        private Brush ApparentWindLineBrush = Brushes.Violet;
+        private Brush ApparentWindDirectionLineBrush = Brushes.Violet;
+        private Brush ApparentWindLineBrush = Brushes.Gold;
         private Brush RelativeWindLineBrush = Brushes.Lime;
 
         private double? _boatHeadingDeg;
@@ -97,11 +101,20 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
                 }
             }
 
-            RelativeWindDirection.Value = result.RelativeWindDirection;
-            RelativeWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(result.RelativeWindDirection);
+            // Kąty 0-180 do kursu
+            double twa = ToHalfAngle(result.RelativeWindDirection);
+            double awa = ToHalfAngle(result.ApparentWindAngle);
+
+            RelativeWindDirection.Value = twa;
+            RelativeWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(twa);
 
             ApparentWindDirection.Value = result.ApparentWindDirection;
             ApparentWindDirectionDegMin.Text = CoordinateFormatter.ToDegreesMinutes(result.ApparentWindDirection);
+
+            ApparentWindSpeed.Value = Math.Round(result.ApparentWindSpeed, 2);
+
+            ApparentWindAngle.Value = awa;
+            ApparentWindAngleDegMin.Text = CoordinateFormatter.ToDegreesMinutes(awa);
 
             _boatHeadingDeg = (double)BoatHeading.Value;
             _windDirectionDeg = (double)WindDirection.Value;
@@ -127,12 +140,13 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             double centerY = height / 2;
 
             //DrawBearingLine(centerX, centerY, _relativeWindDeg, RelativeWindLineLength, RelativeWindLineBrush);
-            DrawBearingLine(centerX, centerY, _boatHeadingDeg, BoatHeadingLineLength, BoatHeadingLineBrush);
+            DrawBearingLine(centerX, centerY, _boatHeadingDeg, BoatHeadingLineLength, BoatHeadingLineBrush, false);
             DrawBearingLine(centerX, centerY, _windDirectionDeg, WindDirectionLineLength, WindDirectionLineBrush);
-            DrawBearingLine(centerX, centerY, _apparentWindDeg, ApparentWindLineLength, ApparentWindLineBrush, false);
+            // Różowa linia wiatru pozornego idzie z tej samej strony co różowy łuk kąta (obrót o 180)
+            DrawBearingLine(centerX, centerY, (_apparentWindDeg + 180) % 360, ApparentWindLineLength, ApparentWindDirectionLineBrush);
 
-            DrawAnglePoint(centerX, centerY, (_apparentWindDeg + 180) % 360, AnglePointSize, ApparentWindLineBrush);
-            DrawAnglePoint(centerX, centerY, _relativeWindDeg, AnglePointSize, RelativeWindLineBrush);
+            DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)(_apparentWindDeg + 180) % 360, PointDistance * ApparentAngleLineDistanceRatio, ApparentWindLineBrush);
+            DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)_relativeWindDeg, PointDistance * RelativeAngleLineDistanceRatio, RelativeWindLineBrush);
         }
 
         private void DrawBearingLine(double centerX, double centerY, double? bearingDeg, double length, Brush brush, bool isArrowCenter = true) {
@@ -199,30 +213,57 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             });
         }
 
-        private void DrawAnglePoint(double centerX, double centerY, double? angleDeg, double size, Brush brush) {
-            if (angleDeg is not double angle)
+        private void DrawAngleLine(double centerX, double centerY, double boatHeadingDeg, double windAngleDeg, double radius, Brush brush) {
+            double angleDeg = (windAngleDeg - boatHeadingDeg + 360.0) % 360.0;
+            if (angleDeg < 0.1)
                 return;
 
-            double length = PointDistance;
-            if (!(length > 0) || !(size > 0))   // odrzuca NaN
-                return;
+            var direction = SweepDirection.Clockwise;
+            if (angleDeg > 180) {
+                angleDeg = 360 - angleDeg;
+                direction = SweepDirection.Counterclockwise;
+            }
 
-            double rad = angle * Math.PI / 180.0;
-            double pointX = centerX + length * Math.Sin(rad);
-            double pointY = centerY - length * Math.Cos(rad);
+            double endBearing = direction == SweepDirection.Clockwise ? boatHeadingDeg + angleDeg : boatHeadingDeg - angleDeg;
+            Point start = PointOnCircle(centerX, centerY, radius, boatHeadingDeg);
+            Point end = PointOnCircle(centerX, centerY, radius, endBearing);
 
-            var dot = new Ellipse {
-                Width = size,
-                Height = size,
-                Fill = brush,
-                Stroke = AnglePointOutlineBrush,
-                StrokeThickness = AnglePointOutlineThickness
-            };
+            var figure = new PathFigure { StartPoint = start, IsClosed = false };
+            figure.Segments.Add(new ArcSegment {
+                Point = end,
+                Size = new Size(radius, radius),
+                IsLargeArc = false,
+                SweepDirection = direction
+            });
 
-            Canvas.SetLeft(dot, pointX - size / 2);
-            Canvas.SetTop(dot, pointY - size / 2);
+            var geometry = new PathGeometry();
+            geometry.Figures.Add(figure);
 
-            CompassOverlay.Children.Add(dot);
+            CompassOverlay.Children.Add(new Path {
+                Data = geometry,
+                Stroke = AngleLineOutlineBrush,
+                StrokeThickness = AngleLineThickness + 2 * AngleLineOutlineThickness,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round
+            });
+
+            CompassOverlay.Children.Add(new Path {
+                Data = geometry,
+                Stroke = brush,
+                StrokeThickness = AngleLineThickness,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round
+            });
+        }
+
+        private Point PointOnCircle(double centerX, double centerY, double radius, double bearingDeg) {
+            double rad = bearingDeg * Math.PI / 180.0;
+            return new Point(centerX + radius * Math.Sin(rad), centerY - radius * Math.Cos(rad));
+        }
+
+        private double ToHalfAngle(double angle) {
+            angle = (angle % 360 + 360) % 360; 
+            return angle <= 180 ? angle : 360 - angle;
         }
     }
 }

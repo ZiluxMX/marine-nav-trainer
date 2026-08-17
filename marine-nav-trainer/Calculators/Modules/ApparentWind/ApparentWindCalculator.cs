@@ -5,35 +5,32 @@ namespace marine_nav_trainer.Calculators.Modules.ApparentWind {
         public ApparentWindResult Calculate(ApparentWindInput input) {
             double rad = Math.PI / 180.0;
 
-            // Wiatr pozorny
-            double trueWindHeading = NormalizeDeg(input.WindDirection + 180.0);
+            double tws = input.WindSpeed; 
+            double stw = input.BoatSpeed;   
 
-            double boatHeadingRad = input.BoatHeading * rad;
-            double trueWindHeadingRad = trueWindHeading * rad;
+            // Kąt wiatru rzeczywistego względem dziobu
+            double twa = (input.WindDirection - input.BoatHeading + 360.0) % 360.0; 
+            double alpha = twa * rad;
 
-            double trueWindVectorX = input.WindSpeed * Math.Sin(trueWindHeadingRad);
-            double trueWindVectorY = input.WindSpeed * Math.Cos(trueWindHeadingRad);
+            // AWS = sqrt((W cos a + V)^2 + (W sin a)^2)
+            // AWA = atan2(W sin a, W cos a + V)
+            double alongBow = tws * Math.Cos(alpha) + stw;
+            double acrossBow = tws * Math.Sin(alpha);
 
-            double boatVectorX = input.BoatSpeed * Math.Sin(boatHeadingRad);
-            double boatVectorY = input.BoatSpeed * Math.Cos(boatHeadingRad);
+            double apparentWindSpeed = Math.Sqrt(alongBow * alongBow + acrossBow * acrossBow);
+            double apparentWindAngle = (Math.Atan2(acrossBow, alongBow) / rad + 360.0) % 360.0;
 
-            double apparentWindVectorX = trueWindVectorX - boatVectorX;
-            double apparentWindVectorY = trueWindVectorY - boatVectorY;
-
-            double apparentWindDirection = NormalizeDeg((Math.Atan2(apparentWindVectorX, apparentWindVectorY) / rad) + 180);
-
-            // Kierunek, z którego czuć wieje względem dziobu
-            double relativeWindDirection = NormalizeDeg(input.WindDirection - input.BoatHeading);
+            // Kierunek wiatru pozornego jako namiar (z którego wieje)
+            double apparentWindDirection = (input.BoatHeading + apparentWindAngle) % 360.0;
 
             return new ApparentWindResult {
                 ApparentWindDirection = apparentWindDirection,
-                RelativeWindDirection = relativeWindDirection
+                RelativeWindDirection = twa,   
+                ApparentWindSpeed = apparentWindSpeed,
+                ApparentWindAngle = apparentWindAngle
             };
-        }
-
-        private static double NormalizeDeg(double d) {
-            d %= 360;
-            return d < 0 ? d + 360 : d;
         }
     }
 }
+
+// wzory z https://www.katamarans.com/wind-speed-calculator-true-apparent/

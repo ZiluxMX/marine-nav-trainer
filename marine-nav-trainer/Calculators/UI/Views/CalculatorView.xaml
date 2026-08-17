@@ -31,7 +31,7 @@
                         BorderThickness="1,1,1,1"
                         BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                     <Grid Grid.Column="1"
-                          MaxWidth="400">
+                          MaxWidth="350">
                         <ContentControl x:Name="CalculatorContent"/>
                     </Grid>
                 </Border>

@@ -27,11 +27,12 @@
         </Grid>
         <Grid Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <ui:NumberBox x:Name="DegBox" Grid.Column="0"
+                          MinWidth="50"
                           SpinButtonPlacementMode="Hidden"
                           ClearButtonEnabled="False"
                           MaxDecimalPlaces="0"

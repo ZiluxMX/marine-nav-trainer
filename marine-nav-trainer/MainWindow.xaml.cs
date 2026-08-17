@@ -34,6 +34,18 @@ namespace marine_nav_trainer {
                         HelpControlsWindow.ShowSingle(this);
                         break;
                 }
+                CollapseMenu(item);
+            }
+        }
+
+        private static void CollapseMenu(NavigationViewItem item) {
+            item.IsActive = false;
+
+            var parent = item.NavigationViewItemParent as NavigationViewItem;
+            while (parent != null) {
+                parent.IsExpanded = false;
+                parent.IsActive = false;
+                parent = parent.NavigationViewItemParent as NavigationViewItem;
             }
         }
 

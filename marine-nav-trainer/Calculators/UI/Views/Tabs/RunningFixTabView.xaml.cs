@@ -47,6 +47,15 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
                 MessageBox.Show("Wartość w Polu \"Dystans (Nm)\" nie może być równa 0!");
                 return;
             }
+            if (BearingA.Value == Kdd.Value || BearingB.Value == Kdd.Value) {
+                MessageBox.Show("Wartość namiaru nie może być równa wartości kursu!");
+                return;
+            }
+            double? oppositeCourse = (Kdd.Value + 180) % 360;
+            if (BearingA.Value == oppositeCourse || BearingB.Value == oppositeCourse) {
+                MessageBox.Show("Wartość namiaru nie może być przeciwna wartości kursu!");
+                return;
+            }
 
             RunningFixResult result;
             try {

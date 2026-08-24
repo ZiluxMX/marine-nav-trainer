@@ -144,9 +144,10 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
             DrawBearingLine(centerX, centerY, _windDirectionDeg, WindDirectionLineLength, WindDirectionLineBrush);
             // Różowa linia wiatru pozornego idzie z tej samej strony co różowy łuk kąta (obrót o 180)
             DrawBearingLine(centerX, centerY, (_apparentWindDeg + 180) % 360, ApparentWindLineLength, ApparentWindDirectionLineBrush);
-
-            DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)(_apparentWindDeg + 180) % 360, PointDistance * ApparentAngleLineDistanceRatio, ApparentWindLineBrush);
-            DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)_relativeWindDeg, PointDistance * RelativeAngleLineDistanceRatio, RelativeWindLineBrush);
+            if (_apparentWindDeg > 0 && _relativeWindDeg > 0) {
+                DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)(_apparentWindDeg + 180) % 360, PointDistance * ApparentAngleLineDistanceRatio, ApparentWindLineBrush);
+                DrawAngleLine(centerX, centerY, (double)_boatHeadingDeg, (double)_relativeWindDeg, PointDistance * RelativeAngleLineDistanceRatio, RelativeWindLineBrush);
+            }
         }
 
         private void DrawBearingLine(double centerX, double centerY, double? bearingDeg, double length, Brush brush, bool isArrowCenter = true) {

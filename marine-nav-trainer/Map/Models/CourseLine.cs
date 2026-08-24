@@ -1,4 +1,5 @@
-﻿using System.Windows.Shapes;
+﻿using System.Windows.Controls;
+using System.Windows.Shapes;
 
 namespace marine_nav_trainer.Map.Models {
     internal class CourseLine {
@@ -16,5 +17,7 @@ namespace marine_nav_trainer.Map.Models {
         public double? TrueWindHeading { get; set; }
         public double? AppWindHeading { get; set; }
         public Line? Line { get; set; }
+        public TextBlock? CourseOverGroundLabel { get; set; }
+        public TextBlock? CourseCompasLabel { get; set; }
     }
 }

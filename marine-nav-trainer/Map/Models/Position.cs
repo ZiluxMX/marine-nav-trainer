@@ -8,8 +8,10 @@ namespace marine_nav_trainer.Map.Models {
         public double Lat { get; set; }
         public double Lon { get; set; }
         public string? Label { get; set; }
+        public DateTime Date { get; set; } = DateTime.Today;
         public string? Time { get; set; }
         public double? Log { get; set; }
         public PositionMark? Mark { get; set; }
+        public PositionLeader? Leader { get; set; }
     }
 }

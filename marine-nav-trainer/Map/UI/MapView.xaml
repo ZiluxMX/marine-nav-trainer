@@ -20,23 +20,23 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
+                <WrapPanel x:Name="ControlPanel" Grid.Column="0"
+                           Orientation="Horizontal"
+                           VerticalAlignment="Center">
 
-                    <ui:TextBlock Text="Panel sterowania"                              
+                    <ui:TextBlock Text="Panel sterowania"                        
                                     FontSize="16"                   
                                     VerticalAlignment="Center"      
                                     Margin="4,0,4,0"/>
 
                     <ui:Button x:Name="ToggleEdgesButton"
                                 Content="Krawędzie mapy"
-                                Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                 Appearance="Info"
                                 Click="ToggleEdgesOnClick"/>
 
                     <ui:Button Content="Resetuj przybliżenie"
-                                Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                 Appearance="Secondary"
                                 Click="ResizeMapOnClick"/>
                     <!-- 
@@ -59,35 +59,66 @@
                     -->
                     <ui:Button x:Name="TogglePointsTabButton"
                                Content="Lista punktów"
-                               Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                Appearance="Secondary"
                                Click="TogglePointsTabOnClick"/>
 
                     <ui:Button x:Name="ToggleCourseTabButton"
                                Content="Lista kursów"
-                               Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                Appearance="Secondary"
                                Click="ToggleCourseTabOnClick"/>
 
+                    <!-- Ramki boczne - Tag wskazuje ramkę -->
+                    <ui:Button Content="Opis zadania"
+                               Tag="TaskDescription"
+                                Margin="4,4,4,4"
+                               Appearance="Secondary"
+                               Click="ToggleFrameOnClick"/>
+
+                    <ui:Button Content="Kalkulatory"
+                               Tag="Calculators"
+                                Margin="4,4,4,4"
+                               Appearance="Secondary"
+                               Click="ToggleFrameOnClick"/>
+
+                    <ui:Button Content="Tabela dewiacji"
+                               Tag="DeviationTable"
+                                Margin="4,4,4,4"
+                               Appearance="Secondary"
+                               Click="ToggleFrameOnClick"/>
+
+                    <ui:Button Content="Tabela wiatrów"
+                               Tag="LeewayTable"
+                                Margin="4,4,4,4"
+                               Appearance="Secondary"
+                               Click="ToggleFrameOnClick"/>
+
+                    <ui:Button Content="Deklinacja i czas"
+                               Tag="VariationTable"
+                                Margin="4,4,4,4"
+                               Appearance="Secondary"
+                               Click="ToggleFrameOnClick"/>
+
                     <ui:Button x:Name="SelectMapButton"
                                 Content="Wybierz mapę"
-                                Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                 Appearance="Danger"
                                 Click="SelectMapOnClick"/>
 
                     <ui:Button x:Name="SaveTaskButton"
                                Content="Zapisz zadanie"
-                               Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                Appearance="Success"
                                Click="SaveTaskOnClick"/>
 
                     <ui:Button x:Name="LoadTaskButton"
                                Content="Wczytaj zadanie"
-                               Margin="4,0,4,0"
+                                Margin="4,4,4,4"
                                Appearance="Success"
                                Click="LoadTaskOnClick"/>
 
-                </StackPanel>
+                </WrapPanel>
 
                 <Border Grid.Column="2" VerticalAlignment="Center">
                     <ui:TextBlock x:Name="CoordsText"/>
@@ -351,6 +382,12 @@
                                 <ui:TextBlock x:Name="PosLonText" Margin="0,2,0,0"
                                               Padding="8,4,8,4"
                                               TextWrapping="Wrap"/>
+
+                                <ui:TextBlock Text="Data" Margin="0,6,0,0"/>
+                                <DatePicker x:Name="PosDatePicker" Margin="0,2,0,0"
+                                            FirstDayOfWeek="Monday"
+                                            SelectedDateFormat="Short"
+                                            SelectedDateChanged="PosDate_SelectedDateChanged"/>
 
                                 <ui:TextBlock Text="Godzina" Margin="0,6,0,0"/>
                                 <ui:TextBox x:Name="PosTimeBox" Margin="0,2,0,0"

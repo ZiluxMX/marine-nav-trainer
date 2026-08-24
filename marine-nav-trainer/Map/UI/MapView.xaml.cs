@@ -1,12 +1,14 @@
 ﻿using marine_nav_trainer.Map.Models;
 using marine_nav_trainer.Map.UI.Controls;
 using marine_nav_trainer.Map.UI.Views;
+using marine_nav_trainer.Navigation.Models;
 using PdfiumViewer;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +23,7 @@ using Drawing = System.Drawing.Imaging;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
 using MessageBoxImage = System.Windows.MessageBoxImage;
+using MessageBoxResult = System.Windows.MessageBoxResult;
 using Path = System.IO.Path;
 using Point = System.Windows.Point;
 using Rectangle = System.Drawing.Rectangle;
@@ -31,12 +34,15 @@ namespace marine_nav_trainer.Map {
         public bool _isTeacherMode = true;
 
         private const string DefaultMapFile = "ChatGPT_BackgroundMap.pdf";
+        private const int MaxTaskFileNameLength = 80;
 
         private double ZoomStep = 1.1;
         private double MinZoom = 0.08;
         private double MaxZoom = 2.0;
         private double BitmapScalingStep = 0.35;
         private double MarkSize = 30;
+        private double CourseLabelFontSize = 30;
+        private double CourseLabelOffset = 6;
 
         private Point _panStart;
         private Line? _activeEdge = null;
@@ -68,6 +74,8 @@ namespace marine_nav_trainer.Map {
         private List<NavTriangle> _navTriangles = new();
         private List<NavDivider> _navDividers = new();
         private string _currentMapPath = string.Empty;
+        private DateTime _defaultPointDate = DateTime.Today;
+        private readonly HashSet<MapFrame> _visibleFrames = [];
 
         // JSON        
         private double LatTop = 0;
@@ -86,14 +94,29 @@ namespace marine_nav_trainer.Map {
         private double MapContentWidth => ContentExtent(MapImage.Width);
         private double MapContentHeight => ContentExtent(MapImage.Height);
 
+        // ramki obok mapy
+        public event EventHandler<MapFrame>? FrameVisibilityChanged;
+
+        // dane ramek przy zapisie i wczytaniu zadania
+        public event EventHandler<NavigationData>? NavigationDataRequested;
+        public event EventHandler<NavigationData>? NavigationDataLoaded;
+        public event EventHandler<TaskMeta>? TaskMetaRequested;
+        public event EventHandler<TaskMeta>? TaskMetaLoaded;
+
+        public void SetDefaultPointDate(DateTime date) {
+            _defaultPointDate = date.Date;
+        }
+
+        public bool IsFrameVisible(MapFrame frame) {
+            return _visibleFrames.Contains(frame);
+        }
 
         public MapView() {
             InitializeComponent();
+            Loaded += MapViewOnLoaded;
             InitMapBoundsInputs();
             LoadPdfMap(Path.Combine(BackgroundDir, DefaultMapFile), true);
-            Dispatcher.InvokeAsync(() => {
-                ResizeMapToMainWindow();
-            }, Threading.DispatcherPriority.Loaded);
+            Dispatcher.InvokeAsync(ResizeMapToMainWindow, Threading.DispatcherPriority.Loaded);
         }
 
         private void InitMapBoundsInputs() {
@@ -473,6 +496,7 @@ namespace marine_nav_trainer.Map {
                 Y = y,
                 Lat = lat,
                 Lon = lon,
+                Date = _defaultPointDate,
                 Label = $"P{_nextIdPosition}",
                 Mark = mark
             };
@@ -480,6 +504,7 @@ namespace marine_nav_trainer.Map {
             _positions.Add(markPos);
             _nextIdPosition++;
             mark.Tag = markPos;
+            AttachPositionLeader(markPos);
             RefreshPositionList();
             return true;
         }
@@ -564,6 +589,7 @@ namespace marine_nav_trainer.Map {
                 Y = pos.Y,
                 Lat = geo.lat,
                 Lon = geo.lon,
+                Date = _defaultPointDate,
                 Label = $"P{_nextIdPosition}",
                 Mark = mark
             };
@@ -571,6 +597,7 @@ namespace marine_nav_trainer.Map {
             _positions.Add(markPos);
             _nextIdPosition++;
             mark.Tag = markPos;
+            AttachPositionLeader(markPos);
             RefreshPositionList();
         }
 
@@ -672,6 +699,7 @@ namespace marine_nav_trainer.Map {
                     _courseLines.Add(course);
                     _nextIdCourse++;
                     _currentLine.IsHitTestVisible = true;
+                    UpdateCourseLabels(course);
                     RefreshCourseList();
                 }
                 SetCourseButton.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
@@ -945,25 +973,180 @@ namespace marine_nav_trainer.Map {
         private void LoadTaskOnClick(object sender, RoutedEventArgs e) {
             LoadTask();
         }
+        private void MapViewOnLoaded(object sender, RoutedEventArgs e) {
+            if (FrameVisibilityChanged != null)
+                return;
+
+            foreach (var child in ControlPanel.Children)
+                if (child is Wpf.Ui.Controls.Button button && button.Tag is string)
+                    button.Visibility = Visibility.Collapsed;
+        }
+
+        // ramka z Tag przycisku
+        private void ToggleFrameOnClick(object sender, RoutedEventArgs e) {
+            var button = (Wpf.Ui.Controls.Button)sender;
+            var frame = Enum.Parse<MapFrame>((string)button.Tag);
+
+            bool isVisible = !_visibleFrames.Remove(frame);
+            if (isVisible)
+                _visibleFrames.Add(frame);
+
+            button.Appearance = isVisible ? Wpf.Ui.Controls.ControlAppearance.Info
+                                          : Wpf.Ui.Controls.ControlAppearance.Secondary;
+            FrameVisibilityChanged?.Invoke(this, frame);
+        }
 
         // JSON
+        private NavigationData CollectNavigationData() {
+            var navigation = NavigationData.LoadDefaultValues();
+            NavigationDataRequested?.Invoke(this, navigation);
+            return navigation;
+        }
+
+        private TaskMeta CollectTaskMeta() {
+            var meta = new TaskMeta();
+            TaskMetaRequested?.Invoke(this, meta);
+            return meta;
+        }
+
+        private static TaskMeta ReadTaskMeta(JsonElement task) {
+            if (!task.TryGetProperty("meta", out var meta) || meta.ValueKind != JsonValueKind.Object)
+                return new TaskMeta();
+
+            return new TaskMeta {
+                Title = ReadString(meta, "title"),
+                Desc = ReadString(meta, "desc"),
+                Author = ReadString(meta, "author"),
+                ContentMd = ReadString(meta, "content_md")
+            };
+        }
+
+        private static NavigationData ReadNavigationData(JsonElement task) {
+            var navigation = NavigationData.LoadDefaultValues();
+
+            if (!task.TryGetProperty("navigation", out var navigationElement))
+                return navigation;
+
+            if (navigationElement.TryGetProperty("timezone", out var timezoneElement) &&
+                timezoneElement.ValueKind == JsonValueKind.Object) {
+
+                string name = ReadString(timezoneElement, "name");
+                string offset = ReadString(timezoneElement, "offset");
+
+                if (name.Length > 0)
+                    navigation.TimeZone.Name = name;
+                if (offset.Length > 0)
+                    navigation.TimeZone.Offset = offset;
+            }
+
+            if (navigationElement.TryGetProperty("magnetic_variation", out var variationElement) &&
+                variationElement.ValueKind == JsonValueKind.Object) {
+
+                navigation.Variation = new MagneticVariation {
+                    BaseDeg = ReadNumber(variationElement, "base_deg"),
+                    BaseYear = ReadYear(variationElement),
+                    AnnualChangeDeg = ReadNumber(variationElement, "annual_change_deg")
+                };
+            }
+
+            if (navigationElement.TryGetProperty("magnetic_variation_list", out var variationListElement) &&
+                variationListElement.ValueKind == JsonValueKind.Array) {
+
+                foreach (var entry in variationListElement.EnumerateArray())
+                    navigation.VariationList.Add(new LocalMagneticVariation {
+                        BaseDeg = ReadNumber(entry, "base_deg"),
+                        BaseYear = ReadYear(entry),
+                        AnnualChangeDeg = ReadNumber(entry, "annual_change_deg"),
+                        Lat = ReadNumber(entry, "lat"),
+                        Lon = ReadNumber(entry, "lon"),
+                        RangeNm = ReadNumber(entry, "range_nm")
+                    });
+            }
+
+            if (navigationElement.TryGetProperty("compass_deviation_table", out var deviationElement) &&
+                deviationElement.ValueKind == JsonValueKind.Array) {
+
+                var deviationTable = new List<Deviation>();
+                foreach (var entry in deviationElement.EnumerateArray())
+                    deviationTable.Add(new Deviation {
+                        HeadingDeg = (int)Math.Round(ReadNumber(entry, "heading_deg")),
+                        DeviationDeg = ReadNumber(entry, "deviation_deg")
+                    });
+
+                if (deviationTable.Count > 0)
+                    navigation.DeviationTable = deviationTable;
+            }
+
+            if (navigationElement.TryGetProperty("leeway", out var leewayElement) &&
+                leewayElement.ValueKind == JsonValueKind.Object) {
+
+                foreach (var entry in navigation.Leeway) {
+                    if (!leewayElement.TryGetProperty(entry.Key, out var pointOfSail) ||
+                        pointOfSail.ValueKind != JsonValueKind.Object)
+                        continue;
+
+                    if (pointOfSail.TryGetProperty("range", out var range) &&
+                        range.ValueKind == JsonValueKind.Object) {
+                        entry.MinDeg = ReadNumber(range, "min_deg");
+                        entry.MaxDeg = ReadNumber(range, "max_deg");
+                    }
+                    entry.ValueDeg = ReadNumber(pointOfSail, "value_deg");
+                }
+            }
+
+            return navigation;
+        }
+
+        // nazwa pliku z tytułu, bez tytułu - pierwsza wolna zad_01.json
+        private static string BuildTaskFileName(string title) {
+            string name = title.Trim();
+
+            foreach (char invalid in Path.GetInvalidFileNameChars())
+                name = name.Replace(invalid, '_');
+
+            name = string.Join(' ', name.Split(default(char[]), StringSplitOptions.RemoveEmptyEntries));
+            name = name.TrimEnd('.', ' ');
+
+            if (name.Length > MaxTaskFileNameLength)
+                name = name[..MaxTaskFileNameLength].TrimEnd();
+
+            return name.Length > 0 ? $"{name}.json" : NextFreeTaskFileName();
+        }
+
+        private static string NextFreeTaskFileName() {
+            int index = 1;
+            string name;
+            do {
+                name = $"zad_{index:00}.json";
+                index++;
+            } while (File.Exists(Path.Combine(JsonsDir, name)));
+
+            return name;
+        }
+
         private void SaveTask() {
+            TaskMeta meta = CollectTaskMeta();
+            NavigationData navigation = CollectNavigationData();
+
             // punkty do solution
-            var trk = _positions.Select((pos, i) => {
-                // czas jako dziś + godzina z pola time (HHMM) - TODO do dokończenia data
-                DateTime today = DateTime.Today;
+            List<object> trk = new();
+            for (int i = 0; i < _positions.Count; i++) {
+                Position pos = _positions[i];
+
+                // czas + data
                 int hh = 0, mm = 0;
                 if (!string.IsNullOrWhiteSpace(pos.Time)) {
                     string timeText = pos.Time.Trim().PadLeft(4, '0');
                     int.TryParse(timeText.Substring(0, 2), out hh);
                     int.TryParse(timeText.Substring(2, 2), out mm);
                 }
-                DateTime time = new DateTime(today.Year, today.Month, today.Day, hh % 24, mm % 60, 0);
+                DateTime date = pos.Date.Date;
+                DateTime time = new(date.Year, date.Month, date.Day, hh % 24, mm % 60, 0);
 
                 // kurs wychodzący z punktu
                 CourseLine? course = _courseLines.FirstOrDefault(line => line.StartPosition == pos);
 
-                return new {
+                trk.Add(new {
                     id = $"trk-{i + 1}",
                     time = time.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture),
                     position = new {
@@ -977,12 +1160,69 @@ namespace marine_nav_trainer.Map {
                     course_true_deg = 0.0,                                            // TODO dodać do formatki
                     course_over_ground_deg = course?.CourseOverGround ?? 0,
                     speed_kn = course?.Velocity ?? 0
+                });
+            }
+
+            List<object> deviationTable = [];
+            foreach (var entry in navigation.DeviationTable) {
+                deviationTable.Add(new {
+                    heading_deg = entry.HeadingDeg,
+                    deviation_deg = entry.DeviationDeg
+                });
+            }
+
+            Dictionary<string, object> leeway = [];
+            foreach (var entry in navigation.Leeway) {
+                leeway[entry.Key] = new {
+                    range = new {
+                        min_deg = entry.MinDeg,
+                        max_deg = entry.MaxDeg
+                    },
+                    value_deg = entry.ValueDeg
                 };
-            }).ToList();
+            }
+
+            Dictionary<string, object> navigationSection = new() {
+                ["timezone"] = new {
+                    name = navigation.TimeZone.Name,
+                    offset = navigation.TimeZone.Offset
+                },
+                ["magnetic_variation"] = new {
+                    base_deg = Math.Round(navigation.Variation.BaseDeg, 4),
+                    base_year = navigation.Variation.BaseYear,
+                    annual_change_deg = Math.Round(navigation.Variation.AnnualChangeDeg, 4)
+                }
+            };
+
+            if (navigation.VariationList.Count > 0) {
+                List<object> variationList = [];
+                foreach (var entry in navigation.VariationList) {
+                    variationList.Add(new {
+                        base_deg = Math.Round(entry.BaseDeg, 4),
+                        base_year = entry.BaseYear,
+                        annual_change_deg = Math.Round(entry.AnnualChangeDeg, 4),
+                        lat = Math.Round(entry.Lat, 4),
+                        lon = Math.Round(entry.Lon, 4),
+                        range_nm = Math.Round(entry.RangeNm, 4)
+                    });
+                }
+
+                navigationSection["magnetic_variation_list"] = variationList;
+            }
+
+            navigationSection["compass_deviation_table"] = deviationTable;
+            navigationSection["leeway"] = leeway;
 
             // Plik Json'a
             var task = new {
                 task = new {
+                    meta = new {
+                        title = meta.Title,
+                        desc = meta.Desc,
+                        author = meta.Author,
+                        content_md = meta.ContentMd
+                    },
+                    navigation = navigationSection,
                     chart = new {
                         file_name = Path.GetFileName(_currentMapPath),
                         bounds = new {
@@ -1005,23 +1245,35 @@ namespace marine_nav_trainer.Map {
                 }
             };
 
-            // TODO - TEMP Title do zapisu + nadpisanie
             try {
                 Directory.CreateDirectory(JsonsDir);
 
-                // pierwsza wolna nazwa zad_01.json, zad_02.json - test
-                int index = 1;
-                string path;
-                do {
-                    path = Path.Combine(JsonsDir, $"zad_{index:00}.json");
-                    index++;
-                } while (File.Exists(path));
+                // zapis/nadpis pliku
+                string path = Path.Combine(JsonsDir, BuildTaskFileName(meta.Title));
+                string fileName = Path.GetFileName(path);
+                bool isOverwrite = File.Exists(path);
 
-                string json = JsonSerializer.Serialize(task, new JsonSerializerOptions { WriteIndented = true });
+                if (isOverwrite) {
+                    var answer = MessageBox.Show(
+                        $"Zadanie \"{fileName}\" już istnieje.\nCzy nadpisać zapisany plik?",
+                        "Zapis zadania",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (answer != MessageBoxResult.Yes)
+                        return;
+                }
+
+                string json = JsonSerializer.Serialize(task, new JsonSerializerOptions {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
                 File.WriteAllText(path, json);
 
                 MessageBox.Show(
-                    $"Zapisano zadanie jako \"{Path.GetFileName(path)}\".",
+                    isOverwrite ? $"Nadpisano zadanie \"{fileName}\"."
+                                : $"Zapisano zadanie jako \"{fileName}\".",
                     "Zapis zadania",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -1045,6 +1297,8 @@ namespace marine_nav_trainer.Map {
 
             string mapFile, taskPath, fileName;
             double boundNorth, boundSouth, boundWest, boundEast, marginTop, marginBottom, marginLeft, marginRight;
+            NavigationData navigation;
+            TaskMeta meta;
             var trkPosition = new List<(double lat, double lon, DateTime date, string? time, double? log,
                                         double distance, double kk, double kdd, double speed)>();
 
@@ -1052,7 +1306,11 @@ namespace marine_nav_trainer.Map {
             fileName = Path.GetFileName(taskPath);
             try {
                 using var jsonFile = JsonDocument.Parse(File.ReadAllText(taskPath));
-                var chart = jsonFile.RootElement.GetProperty("task").GetProperty("chart");
+                var taskElement = jsonFile.RootElement.GetProperty("task");
+                var chart = taskElement.GetProperty("chart");
+
+                meta = ReadTaskMeta(taskElement);
+                navigation = ReadNavigationData(taskElement);
 
                 mapFile = chart.GetProperty("file_name").GetString() ?? string.Empty;
 
@@ -1110,6 +1368,9 @@ namespace marine_nav_trainer.Map {
                         }
                     }
                 }
+
+                if (trkPosition.Count > 0)
+                    navigation.StartDate = trkPosition[0].date;
             }
             catch (Exception ex) {
                 MessageBox.Show(
@@ -1146,6 +1407,9 @@ namespace marine_nav_trainer.Map {
                 ResizeMapToMainWindow();
                 InitMapBoundsInputs();
 
+                // opis zadania, tabele dewiacji i wiatrów do paneli bocznych
+                TaskMetaLoaded?.Invoke(this, meta);
+                NavigationDataLoaded?.Invoke(this, navigation);
             }
             catch (Exception ex) {
                 MessageBox.Show(
@@ -1162,8 +1426,10 @@ namespace marine_nav_trainer.Map {
                 foreach (var x in trkPosition) {
                     if (TryInsertPoint(x.lat, x.lon)) {
                         Position pos = _positions[^1];
+                        pos.Date = x.date;
                         pos.Time = x.time;
                         pos.Log = x.log;
+                        UpdatePositionLeader(pos);
                         placedPositions.Add(pos);
                     }
                     else {
@@ -1228,6 +1494,7 @@ namespace marine_nav_trainer.Map {
                     line.Tag = course;
                     _courseLines.Add(course);
                     _nextIdCourse++;
+                    UpdateCourseLabels(course);
                 }
                 RefreshCourseList();
             }
@@ -1348,12 +1615,14 @@ namespace marine_nav_trainer.Map {
                     pos.Mark.Tag = null;
                     MapCanvas.Children.Remove(pos.Mark);
                 }
+                RemovePositionLeader(pos);
             }
             foreach (var course in _courseLines) {
                 if (course.Line != null) {
                     course.Line.Tag = null;
                     MapCanvas.Children.Remove(course.Line);
                 }
+                RemoveCourseLabels(course);
             }
             foreach (var guide in _guideLines) {
                 if (guide.Line != null) {
@@ -1418,6 +1687,20 @@ namespace marine_nav_trainer.Map {
         private static double ContentExtent(double extent)
             => double.IsNaN(extent) || extent <= 0 ? double.PositiveInfinity : extent;
 
+        private static int ReadYear(JsonElement element) {
+            int year = (int)Math.Round(ReadNumber(element, "base_year"));
+            return year > 0 ? year : DateTime.Today.Year;
+        }
+
+        private static string ReadString(JsonElement element, string name) {
+            if (element.TryGetProperty(name, out var value)) {
+                if (value.ValueKind == JsonValueKind.String)
+                    return value.GetString() ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+
         private static double ReadNumber(JsonElement element, string name) {
             if (element.TryGetProperty(name, out var value)) {
                 if (value.ValueKind == JsonValueKind.Number)
@@ -1471,11 +1754,13 @@ namespace marine_nav_trainer.Map {
                 if (_selectedPosition.Mark != null) {
                     MapCanvas.Children.Remove(_selectedPosition.Mark);
                 }
+                RemovePositionLeader(_selectedPosition);
                 List<CourseLine>? toRemove = _courseLines.Where(course => course.StartPosition == _selectedPosition ||
                                              course.EndPosition == _selectedPosition).ToList(); // TODO ten or do skasowania jak przestane wiązać endPosition
                 foreach (CourseLine course in toRemove) {
                     if (course.Line != null)
                         MapCanvas.Children.Remove(course.Line);
+                    RemoveCourseLabels(course);
                     _courseLines.Remove(course);
                 }
                 _positions.Remove(_selectedPosition);
@@ -1493,6 +1778,7 @@ namespace marine_nav_trainer.Map {
                 if (_selectedCourseLine.Line != null) {
                     MapCanvas.Children.Remove(_selectedCourseLine.Line);
                 }
+                RemoveCourseLabels(_selectedCourseLine);
                 _courseLines.Remove(_selectedCourseLine);
                 _selectedCourseLine.Line = null;
                 _selectedCourseLine = null;
@@ -1519,11 +1805,15 @@ namespace marine_nav_trainer.Map {
             try {
                 if (_selectedPosition?.Mark != null)
                     _selectedPosition.Mark.Color = Brushes.Blue;
+                if (_selectedPosition?.Leader != null)
+                    _selectedPosition.Leader.Color = Brushes.Blue;
 
                 _selectedPosition = pos;
 
                 if (pos?.Mark != null)
                     pos.Mark.Color = Brushes.OrangeRed;
+                if (pos?.Leader != null)
+                    pos.Leader.Color = Brushes.OrangeRed;
 
                 PositionList.SelectedItem = FindListItem(pos);
                 DeletePositionButton.IsEnabled = pos != null;
@@ -1581,6 +1871,7 @@ namespace marine_nav_trainer.Map {
                 PosLabelBox.Text = string.Empty;
                 PosLatText.Text = string.Empty;
                 PosLonText.Text = string.Empty;
+                PosDatePicker.SelectedDate = null;
                 PosTimeBox.Text = string.Empty;
                 PosLogBox.Value = null;
 
@@ -1592,6 +1883,7 @@ namespace marine_nav_trainer.Map {
             PosLabelBox.Text = pos.Label ?? string.Empty;
             PosLatText.Text = DegToDegMin(pos.Lat, isLat: true);
             PosLonText.Text = DegToDegMin(pos.Lon, isLat: false);
+            PosDatePicker.SelectedDate = pos.Date;
             PosTimeBox.Text = pos.Time ?? string.Empty;
             PosLogBox.Value = pos.Log;
         }
@@ -1699,6 +1991,14 @@ namespace marine_nav_trainer.Map {
                 return;
             }
             _selectedPosition.Time = digits.Length == 0 ? "0000" : digits;
+            UpdatePositionLeader(_selectedPosition);
+        }
+
+        private void PosDate_SelectedDateChanged(object sender, SelectionChangedEventArgs e) {
+            if (_isSyncingSelection || _selectedPosition == null)
+                return;
+
+            _selectedPosition.Date = PosDatePicker.SelectedDate ?? _selectedPosition.Date;
         }
 
         private void PosLog_TextChanged(object sender, TextChangedEventArgs e) {
@@ -1706,19 +2006,27 @@ namespace marine_nav_trainer.Map {
                 return;
 
             _selectedPosition.Log = TryParseBound(PosLogBox.Text, out double v) ? Math.Round(v, 1) : null;
+            UpdatePositionLeader(_selectedPosition);
         }
 
         // Zakładka linii kursów
         private void ApplyCourseSelection(CourseLine? course) {
             _isSyncingSelection = true;
             try {
-                if (_selectedCourseLine?.Line != null)
-                    _selectedCourseLine.Line.Stroke = Brushes.Blue;
+                var previous = _selectedCourseLine;
+                if (previous?.Line != null)
+                    previous.Line.Stroke = Brushes.Blue;
 
                 _selectedCourseLine = course;
 
                 if (course?.Line != null)
                     course.Line.Stroke = Brushes.OrangeRed;
+
+                // opisy w kolorze linii
+                if (previous != null)
+                    UpdateCourseLabels(previous);
+                if (course != null)
+                    UpdateCourseLabels(course);
 
                 CourseList.SelectedItem = FindCourseListItem(course);
                 DeleteCourseButton.IsEnabled = course != null;
@@ -1731,6 +2039,130 @@ namespace marine_nav_trainer.Map {
             }
             finally {
                 _isSyncingSelection = false;
+            }
+        }
+
+        // odnośnik punktu - nowy nie ma godziny ani logu, więc startuje schowany
+        private void AttachPositionLeader(Position pos) {
+            var leader = new PositionLeader(MarkSize) { IsHitTestVisible = false };
+            Canvas.SetLeft(leader, pos.X);
+            Canvas.SetTop(leader, pos.Y);
+            MapCanvas.Children.Add(leader);
+
+            pos.Leader = leader;
+        }
+
+        private static void UpdatePositionLeader(Position pos) {
+            pos.Leader?.Update(pos.Time, pos.Log);
+        }
+
+        private void RemovePositionLeader(Position pos) {
+            if (pos.Leader == null)
+                return;
+
+            MapCanvas.Children.Remove(pos.Leader);
+            pos.Leader = null;
+        }
+
+        // opis kursów
+        private void UpdateCourseLabels(CourseLine course) {
+            if (course.Line is not Line line) {
+                RemoveCourseLabels(course);
+                return;
+            }
+
+            double dx = line.X2 - line.X1;
+            double dy = line.Y2 - line.Y1;
+            double length = Math.Sqrt(dx * dx + dy * dy);
+            if (length < 1) {
+                RemoveCourseLabels(course);
+                return;
+            }
+
+            double midX = (line.X1 + line.X2) / 2;
+            double midY = (line.Y1 + line.Y2) / 2;
+
+            // normalna do odcinka, zwrócona ku górze mapy
+            double normalX = -dy / length;
+            double normalY = dx / length;
+            if (normalY > 0) {
+                normalX = -normalX;
+                normalY = -normalY;
+            }
+
+            // tekst równolegle do odcinka
+            double angle = RadToDeg(Math.Atan2(dy, dx));
+            if (angle > 90)
+                angle -= 180;
+            else if (angle < -90)
+                angle += 180;
+
+            var brush = ReferenceEquals(course, _selectedCourseLine) ? Brushes.OrangeRed : Brushes.Blue;
+
+            course.CourseOverGroundLabel = PlaceCourseLabel(course.CourseOverGroundLabel,
+                                                            FormatCourseLabel("KdD", course.CourseOverGround),
+                                                            brush, midX, midY, normalX, normalY, angle,
+                                                            isAboveLine: true);
+
+            course.CourseCompasLabel = PlaceCourseLabel(course.CourseCompasLabel,
+                                                        FormatCourseLabel("KK", course.CourseCompas),
+                                                        brush, midX, midY, normalX, normalY, angle,
+                                                        isAboveLine: false);
+        }
+
+        private System.Windows.Controls.TextBlock? PlaceCourseLabel(System.Windows.Controls.TextBlock? label, string? text,
+                                            System.Windows.Media.Brush brush,
+                                            double midX, double midY, double normalX, double normalY,
+                                            double angle, bool isAboveLine) {
+            if (text == null) {
+                if (label != null)
+                    MapCanvas.Children.Remove(label);
+
+                return null;
+            }
+
+            if (label == null) {
+                label = new System.Windows.Controls.TextBlock {
+                    FontSize = CourseLabelFontSize,
+                    FontWeight = FontWeights.SemiBold,
+                    IsHitTestVisible = false,
+                    RenderTransformOrigin = new Point(0.5, 0.5)
+                };
+                MapCanvas.Children.Add(label);
+            }
+
+            label.Text = text;
+            label.Foreground = brush;
+            label.RenderTransform = new RotateTransform(angle);
+            label.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+
+            double side = isAboveLine ? 1 : -1;
+            double distance = label.DesiredSize.Height / 2 + CourseLabelOffset;
+            double centerX = midX + normalX * distance * side;
+            double centerY = midY + normalY * distance * side;
+
+            Canvas.SetLeft(label, centerX - label.DesiredSize.Width / 2);
+            Canvas.SetTop(label, centerY - label.DesiredSize.Height / 2);
+
+            return label;
+        }
+
+        private static string? FormatCourseLabel(string name, double? value) {
+            if (value == null)
+                return null;
+
+            return $"{name} {value.Value:000.#}°";
+        }
+
+        private void RemoveCourseLabels(CourseLine course) {
+            if (course.CourseOverGroundLabel != null) {
+                MapCanvas.Children.Remove(course.CourseOverGroundLabel);
+                course.CourseOverGroundLabel = null;
+            }
+
+            if (course.CourseCompasLabel != null) {
+                MapCanvas.Children.Remove(course.CourseCompasLabel);
+                course.CourseCompasLabel = null;
             }
         }
 
@@ -1817,9 +2249,11 @@ namespace marine_nav_trainer.Map {
 
             if (sender == CourseKKBox) {
                 _selectedCourseLine.CourseCompas = ReadOptionalNumber(CourseKKBox);
+                UpdateCourseLabels(_selectedCourseLine);
             }
             else if (sender == CourseKdDBox) {
                 _selectedCourseLine.CourseOverGround = ReadOptionalNumber(CourseKdDBox);
+                UpdateCourseLabels(_selectedCourseLine);
             }
             else if (sender == CourseVelocityBox) {
                 _selectedCourseLine.Velocity = ReadOptionalNumber(CourseVelocityBox);

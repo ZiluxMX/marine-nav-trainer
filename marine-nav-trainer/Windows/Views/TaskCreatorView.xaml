@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:marine_nav_trainer.Windows.Views"
              xmlns:map="clr-namespace:marine_nav_trainer.Map"
              xmlns:calculator="clr-namespace:marine_nav_trainer.Calculators.UI.Views"
+             xmlns:navigation="clr-namespace:marine_nav_trainer.Navigation.UI.Views"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              d:DesignHeight="1000" d:DesignWidth="1920">
@@ -41,9 +42,25 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0">
-                <calculator:CalculatorView x:Name="CalculatorViewControl"/>
-            </Grid>
+            <!-- Ramki -->
+            <ScrollViewer x:Name="SidePanelScrollViewer" Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          PreviewMouseWheel="SidePanelScrollViewer_PreviewMouseWheel"
+                          MaxWidth="550">
+                <StackPanel Orientation="Vertical">
+                    <local:TaskDescriptionView x:Name="TaskDescriptionViewControl"
+                                               Visibility="Collapsed"/>
+                    <calculator:CalculatorView x:Name="CalculatorViewControl"
+                                               Visibility="Collapsed"/>
+                    <navigation:DeviationTableView x:Name="DeviationTableViewControl"
+                                                   Visibility="Collapsed"/>
+                    <navigation:LeewayTableView x:Name="LeewayTableViewControl"
+                                                Visibility="Collapsed"/>
+                    <navigation:VariationTableView x:Name="VariationTableViewControl"
+                                                   Visibility="Collapsed"/>
+                </StackPanel>
+            </ScrollViewer>
 
             <Grid Grid.Column="1">
                 <map:MapView x:Name="MapViewControl"/>

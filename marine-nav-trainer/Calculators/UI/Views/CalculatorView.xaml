@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:marine_nav_trainer.Calculators.UI.Views"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="700">
+             d:DesignHeight="450" d:DesignWidth="550">
     <Grid>
         <ui:Card VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" Padding="0">
             <Grid>

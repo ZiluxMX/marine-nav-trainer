@@ -48,7 +48,7 @@
                     </StackPanel>
                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
                         <ui:TextBlock Text="Namiar (°)"/>
-                        <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                 </Grid>
 
@@ -76,11 +76,14 @@
                     </StackPanel>
                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
                         <ui:TextBlock Text="Namiar (°)"/>
-                        <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                 </Grid>
 
-                <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
+                <Grid Margin="0,0,0,12">
+                    <ui:Button Content="Wizualizacja" Appearance="Secondary" HorizontalAlignment="Left"/>
+                    <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right"/>
+                </Grid>
 
                 <Separator Margin="0,0,0,5"/>
 

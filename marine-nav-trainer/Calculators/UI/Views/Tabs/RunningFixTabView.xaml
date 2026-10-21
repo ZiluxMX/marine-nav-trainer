@@ -56,11 +56,11 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock Text="Namiar 1 (°)"/>
-                        <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:NumberBox x:Name="BearingA" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Namiar 2 (°)"/>
-                        <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:NumberBox x:Name="BearingB" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                 </Grid>
 
@@ -75,21 +75,24 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <ui:TextBlock Text="KdD (°)"/>
-                        <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:TextBlock Text="Kurs (KDd) (°)"/>
+                        <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Dystans (Nm)"/>
-                        <ui:NumberBox x:Name="Distance" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999999"/>
+                        <ui:NumberBox x:Name="Distance" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="999999"/>
                     </StackPanel>
                 </Grid>
-
-                <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right" Margin="0,0,0,12"/>
+              
+                <Grid Margin="0,0,0,12">
+                    <ui:Button Content="Wizualizacja" Appearance="Secondary" HorizontalAlignment="Left"/>
+                    <ui:Button Content="Oblicz" Click="Oblicz_Click" HorizontalAlignment="Right"/>
+                </Grid>
 
                 <Separator Margin="0,0,0,5"/>
 
                 <!-- Wyniki -->
-                <ui:TextBlock Text="Wyniki — pozycja zliczona" FontTypography="BodyStrong" Margin="0,0,0,6"/>
+                <ui:TextBlock Text="Wyniki — pozycja obserwowana" FontTypography="BodyStrong" Margin="0,0,0,6"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

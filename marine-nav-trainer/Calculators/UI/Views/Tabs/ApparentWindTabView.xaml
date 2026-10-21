@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
-             MaxWidth="400"
+             MinWidth="350"  MaxWidth="400"
              d:DesignHeight="600" d:Width="350">
     <Grid>
         <Grid.RowDefinitions>
@@ -35,12 +35,12 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock Text="Prędkość (kn)"/>
-                        <ui:NumberBox x:Name="BoatSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
+                        <ui:NumberBox x:Name="BoatSpeed" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
 
                     </StackPanel>
                     <StackPanel Grid.Column="2">
-                        <ui:TextBlock Text="Kurs rzeczywisty (°)"/>
-                        <ui:NumberBox x:Name="BoatHeading"  SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                        <ui:TextBlock Text="Kurs rzeczywisty (KR) (°)"/>
+                        <ui:NumberBox x:Name="BoatHeading"  SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360">
                             <ui:NumberBox.Resources>
                                 <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#FF0000"/>
                                 <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="#FF0000"/>
@@ -61,11 +61,11 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock Text="Prędkość (kn)"/>
-                        <ui:NumberBox x:Name="WindSpeed" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
+                        <ui:NumberBox x:Name="WindSpeed" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Kierunek (°)"/>
-                        <ui:NumberBox x:Name="WindDirection" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                        <ui:NumberBox x:Name="WindDirection" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360">
                             <ui:NumberBox.Resources>
                                 <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#0000FF"/>
                                 <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="#0000FF"/>
@@ -88,7 +88,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock Text="Kąt do wiatru rzecz. (°)"/>
-                        <ui:NumberBox x:Name="RelativeWindDirection" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                        <ui:NumberBox x:Name="RelativeWindDirection" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360" MaxDecimalPlaces="2">
                             <ui:NumberBox.Resources>
                                 <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="GreenYellow"/>
                                 <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="GreenYellow"/>
@@ -98,7 +98,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Kierunek wiatru poz. (°)"/>
-                        <ui:NumberBox x:Name="ApparentWindDirection" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                        <ui:NumberBox x:Name="ApparentWindDirection" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360" MaxDecimalPlaces="2">
                             <ui:NumberBox.Resources>
                                 <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="Violet"/>
                                 <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="Violet"/>
@@ -116,7 +116,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock Text="Kąt do wiatru poz. (°)"/>
-                        <ui:NumberBox x:Name="ApparentWindAngle" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360">
+                        <ui:NumberBox x:Name="ApparentWindAngle" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360" MaxDecimalPlaces="2">
                             <ui:NumberBox.Resources>
                                 <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="Gold"/>
                                 <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="Gold"/>
@@ -126,11 +126,11 @@
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Prędkość wiatru poz. (kn)"/>
-                        <ui:NumberBox x:Name="ApparentWindSpeed" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999"/>
+                        <ui:NumberBox x:Name="ApparentWindSpeed" IsReadOnly="True" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="999" MaxDecimalPlaces="2"/>
                     </StackPanel>
                 </Grid>
 
-                <Grid HorizontalAlignment="Center" Margin="0,4,0,0">
+                <Grid HorizontalAlignment="Center" Margin="0,4,0,4">
                     <Image x:Name="CompassRose"
                        Source="pack://siteoforigin:,,,/Assets/Backgrounds/compass.png"
                        Stretch="Uniform" MaxHeight="300"/>

@@ -7,7 +7,7 @@
              xmlns:controls="clr-namespace:marine_nav_trainer.Calculators.UI.Controls"
              mc:Ignorable="d"
              MaxWidth="400"
-             d:DesignHeight="450" d:Width="400">
+             d:DesignHeight="500" d:Width="400">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -55,12 +55,12 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <ui:TextBlock Text="KdD (°)"/>
-                        <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
+                        <ui:TextBlock Text="Kurs (KDd) (°)"/>
+                        <ui:NumberBox x:Name="Kdd" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="360"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <ui:TextBlock Text="Droga (Nm)"/>
-                        <ui:NumberBox x:Name="DistanceNm" SpinButtonPlacementMode="Hidden" Padding="8,4,8,4" Minimum="0" Maximum="9999"/>
+                        <ui:NumberBox x:Name="DistanceNm" SpinButtonPlacementMode="Inline" Padding="8,4,8,4" Minimum="0" Maximum="9999"/>
                     </StackPanel>
                 </Grid>
 

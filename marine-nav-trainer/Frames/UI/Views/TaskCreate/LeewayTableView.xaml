@@ -20,7 +20,7 @@
                         BorderThickness="0,1,0,1"
                         BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <ui:TextBlock Text="Tabela wiatrów" FontTypography="Subtitle" VerticalAlignment="Center"/>
+                        <ui:TextBlock Text="Tabela dryfu" FontTypography="Subtitle" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
@@ -51,7 +51,7 @@
                     <!-- Bajdewind - close_hauled -->
                     <ui:TextBlock Grid.Row="1" Grid.Column="0" Text="Bajdewind" Margin="0,0,0,6" VerticalAlignment="Center"/>
                     <ui:NumberBox x:Name="CloseHauledMinBox" Grid.Row="1" Grid.Column="2"
-                                  Value="0" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  Value="23" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
                                   ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
                                   MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
                     <ui:NumberBox x:Name="CloseHauledMaxBox" Grid.Row="1" Grid.Column="4"

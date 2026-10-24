@@ -49,11 +49,17 @@
                                   Padding="8,4,8,4"/>
 
                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                        <ui:Button Content="Generuj"
+                        <ui:Button Content="Buduj"
                                    Margin="4,4,4,4"
                                    Appearance="Info"
                                    Click="GenerateOnClick"/>
                         
+                        <ui:Button Content="Uzupełnij"
+                                   ToolTip="Uzupełnij wartościami domyślnymi"
+                                   Margin="4,4,4,4"
+                                   Appearance="Secondary"
+                                   Click="FillDefaultsOnClick"/>
+
                         <ui:Button Content="Wyzeruj"
                                    Margin="4,4,4,4"
                                    Appearance="Secondary"

@@ -58,6 +58,11 @@ namespace marine_nav_trainer.Navigation.UI.Views {
             BuildTable(step);
         }
 
+        // krok i wartości startowe - docelowo z pliku konfiguracyjnego
+        private void FillDefaultsOnClick(object sender, RoutedEventArgs e) {
+            SetEntries(Deviation.LoadDefaultValues());
+        }
+
         private void ClearValuesOnClick(object sender, RoutedEventArgs e) {
             _deviations.Clear();
             foreach (var (_, box) in _rows) {

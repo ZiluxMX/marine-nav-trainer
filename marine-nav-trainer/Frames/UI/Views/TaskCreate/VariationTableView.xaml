@@ -7,7 +7,7 @@
              xmlns:calculator="clr-namespace:marine_nav_trainer.Calculators.UI.Controls"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
-             MinWidth="320"
+             MinWidth="350" MaxWidth="550"
              d:DesignHeight="600" d:DesignWidth="550">
     <Grid>
         <ui:Card VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" Padding="0">
@@ -82,12 +82,12 @@
                         <ui:TextBlock Grid.Row="0" Grid.Column="4" Text="Zmiana roczna (′)"/>
 
                         <calculator:CoordinateInputBox x:Name="BaseVariationBox" Grid.Row="1" Grid.Column="0"
-                                                       Margin="0,2,0,0"
+                                                       MinWidth="160" Margin="0,2,0,0"
                                                        IsLatitude="False"/>
 
                         <ui:NumberBox x:Name="BaseYearBox" Grid.Row="1" Grid.Column="2" Margin="0,2,0,0"
                                       VerticalAlignment="Top"
-                                      MinWidth="60" Padding="8,4,8,4"
+                                      MinWidth="150" Padding="8,4,8,4"
                                       Minimum="1900" Maximum="2100" 
                                       MaxDecimalPlaces="0"
                                       ClearButtonEnabled="False" 
@@ -95,7 +95,7 @@
 
                         <ui:NumberBox x:Name="AnnualChangeBox" Grid.Row="1" Grid.Column="4" Margin="0,2,0,0"
                                       VerticalAlignment="Top"
-                                      MinWidth="60" Padding="8,4,8,4"
+                                      MinWidth="150" Padding="8,4,8,4"
                                       Minimum="-600" Maximum="600" 
                                       MaxDecimalPlaces="2"
                                       ClearButtonEnabled="False" 

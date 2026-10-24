@@ -11,6 +11,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
         public const double PointSnapRadius = 20;
         public double AngleMain { get; private set; }
         public double AngleRed { get; private set; }
+        public event EventHandler? AnglesChanged;
         private readonly double _size;
         private readonly double _center;
         private bool _isDragging = false;
@@ -536,7 +537,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             double angle = (Math.Atan2(dy, dx) * 180 / Math.PI - 135); // -45 -> 90
             angle = Math.Round(angle * 2) / 2;  // round do 0.5
 
-            double realAngle = (angle + 135) % 360;
+            double realAngle = (angle + 135 + 360) % 360;
             double realAngleRed = (realAngle + 180) % 360;
             //Debug.WriteLine($"angle={angle}; oblicz={realAngle}; oblicz RED={realAngleRed}");
 
@@ -548,6 +549,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             AngleRed = realAngleRed;
 
             _rotateTransform.Angle = angle;
+            AnglesChanged?.Invoke(this, EventArgs.Empty);
         }
         private void RotationHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs mouse) {
             _isRotating = false;

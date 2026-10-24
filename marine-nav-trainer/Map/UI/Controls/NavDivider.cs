@@ -6,7 +6,15 @@ using System.Windows.Shapes;
 using Point = System.Windows.Point;
 
 namespace marine_nav_trainer.Map.UI.Controls {
+    internal enum NavDividerModel {
+        Classic,    // <---o--->
+        Compass     // podstawa + ramiona cyrkla
+    }
+
     internal class NavDivider : Canvas {
+        // model wizualny kroczka
+        private const NavDividerModel Model = NavDividerModel.Compass;
+
         private static readonly SolidColorBrush RedBrush = new SolidColorBrush(Color.FromArgb(180, 255, 0, 0));
         private static readonly SolidColorBrush BlackBrush = new SolidColorBrush(Color.FromArgb(120, 0, 0, 0));
         private static readonly SolidColorBrush LimeBrush = new SolidColorBrush(Color.FromArgb(180, 100, 255, 0));
@@ -18,8 +26,13 @@ namespace marine_nav_trainer.Map.UI.Controls {
         private readonly double _arrowLength;
         private readonly double _arrowHalfWidth;
         private readonly double _circleRadius;
+        private readonly double _armHeight;
         private Line? _line;
+        private Line? _arm1;
+        private Line? _arm2;
+        private Line? _centerLink;
         private Ellipse? _handleCircle;
+        private Ellipse? _apexRing;
         private Polygon? _arrowHead1;
         private Polygon? _arrowHead2;
         private RotateTransform _rotateTransform = new RotateTransform(0);
@@ -28,6 +41,8 @@ namespace marine_nav_trainer.Map.UI.Controls {
         private double _moveStartLeft;
         private double _moveStartTop;
         private Point _moveStartMouse;
+
+        private bool _isRotating;
 
         private bool _isDraggingArrow;
         private bool _isHoldArrowHead1;
@@ -39,6 +54,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             _arrowLength = 40;
             _arrowHalfWidth = 10;
             _circleRadius = 10;
+            _armHeight = 120;
             Width = size;
             Height = _circleRadius * 2;
             _centerY = _circleRadius;
@@ -51,8 +67,12 @@ namespace marine_nav_trainer.Map.UI.Controls {
             Panel.SetZIndex(this, int.MaxValue);
 
             DrawLine();
+            if (Model == NavDividerModel.Compass)
+                DrawArms();
             DrawArrowHeads();
             DrawCircleHandle();
+            if (Model == NavDividerModel.Compass)
+                DrawApexHandle();
 
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
@@ -106,20 +126,91 @@ namespace marine_nav_trainer.Map.UI.Controls {
         }
 
         private void DrawCircleHandle() {
+            _handleCircle = CreateCircleHandle();
+            Canvas.SetLeft(_handleCircle, Size / 2 - _circleRadius);
+            Canvas.SetTop(_handleCircle, _centerY - _circleRadius);
+            Children.Add(_handleCircle);
+        }
+
+        // ramiona cyrkla: od podstaw grotów do złączenia nad środkiem + cieńszy łącznik między kropką środkową a złączeniem
+        private void DrawArms() {
+            _arm1 = CreateArm();
+            _arm2 = CreateArm();
+            _centerLink = CreateArm();
+            _centerLink.StrokeThickness = _lineThickness / 2;
+            UpdateArms();
+            Children.Add(_arm1);
+            Children.Add(_arm2);
+            Children.Add(_centerLink);
+        }
+
+        // pierścień na złączeniu ramion - obraca kroczek względem kropki środkowej
+        private void DrawApexHandle() {
             double diameter = _circleRadius * 2;
 
-            _handleCircle = new Ellipse {
+            _apexRing = new Ellipse {
+                Width = diameter,
+                Height = diameter,
+                Stroke = Brushes.Red,
+                StrokeThickness = 4,
+                Fill = Brushes.Transparent,
+                Cursor = Cursors.Hand
+            };
+            Canvas.SetLeft(_apexRing, Size / 2 - _circleRadius);
+            Canvas.SetTop(_apexRing, _centerY - _armHeight - _circleRadius);
+            _apexRing.MouseLeftButtonDown += ApexRing_MouseLeftButtonDown;
+            _apexRing.MouseMove += ApexRing_MouseMove;
+            _apexRing.MouseLeftButtonUp += ApexRing_MouseLeftButtonUp;
+            Children.Add(_apexRing);
+        }
+
+        private Ellipse CreateCircleHandle() {
+            double diameter = _circleRadius * 2;
+
+            var circle = new Ellipse {
                 Width = diameter,
                 Height = diameter,
                 Fill = Brushes.Red,
                 Cursor = Cursors.SizeAll
             };
-            Canvas.SetLeft(_handleCircle, Size / 2 - _circleRadius);
-            Canvas.SetTop(_handleCircle, _centerY - _circleRadius);
-            _handleCircle.MouseLeftButtonDown += Circle_MouseLeftButtonDown;
-            _handleCircle.MouseMove += Circle_MouseMove;
-            _handleCircle.MouseLeftButtonUp += Circle_MouseLeftButtonUp;
-            Children.Add(_handleCircle);
+            circle.MouseLeftButtonDown += Circle_MouseLeftButtonDown;
+            circle.MouseMove += Circle_MouseMove;
+            circle.MouseLeftButtonUp += Circle_MouseLeftButtonUp;
+            return circle;
+        }
+
+        private Line CreateArm() {
+            return new Line {
+                Stroke = BlackBrush,
+                StrokeThickness = _lineThickness,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                IsHitTestVisible = false
+            };
+        }
+
+        private void UpdateArms() {
+            double apexX = Size / 2;
+            double apexY = _centerY - _armHeight;
+
+            if (_arm1 != null) {
+                _arm1.X1 = _arrowLength;
+                _arm1.Y1 = _centerY;
+                _arm1.X2 = apexX;
+                _arm1.Y2 = apexY;
+            }
+            if (_arm2 != null) {
+                _arm2.X1 = Size - _arrowLength;
+                _arm2.Y1 = _centerY;
+                _arm2.X2 = apexX;
+                _arm2.Y2 = apexY;
+            }
+            if (_centerLink != null) {
+                _centerLink.X1 = apexX;
+                _centerLink.Y1 = _centerY;
+                _centerLink.X2 = apexX;
+                _centerLink.Y2 = apexY;
+            }
         }
 
         private void ApplyGeometry() {
@@ -140,6 +231,10 @@ namespace marine_nav_trainer.Map.UI.Controls {
             if (_handleCircle != null) {
                 Canvas.SetLeft(_handleCircle, Size / 2 - _circleRadius);
             }
+            if (_apexRing != null) {
+                Canvas.SetLeft(_apexRing, Size / 2 - _circleRadius);
+            }
+            UpdateArms();
         }
 
         // pozycja wierzchołka grotu
@@ -175,7 +270,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             _moveStartMouse = e.GetPosition(parent);
             _moveStartLeft = GetLeftOrZero();
             _moveStartTop = GetTopOrZero();
-            _handleCircle?.CaptureMouse();
+            (sender as UIElement)?.CaptureMouse();
             e.Handled = true;
         }
         private void Circle_MouseMove(object sender, MouseEventArgs e) {
@@ -189,7 +284,33 @@ namespace marine_nav_trainer.Map.UI.Controls {
         }
         private void Circle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
             _isMovingDivider = false;
-            _handleCircle?.ReleaseMouseCapture();
+            (sender as UIElement)?.ReleaseMouseCapture();
+        }
+
+        // Obrót względem kropki środkowej (pierścień na złączeniu)
+        private void ApexRing_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            if (Parent is not Canvas) return;
+
+            _isRotating = true;
+            (sender as UIElement)?.CaptureMouse();
+            e.Handled = true;
+        }
+        private void ApexRing_MouseMove(object sender, MouseEventArgs e) {
+            if (!_isRotating) return;
+            var parent = Parent as Canvas;
+            if (parent == null) return;
+
+            Point mouse = e.GetPosition(parent);
+            double dx = mouse.X - (GetLeftOrZero() + Size / 2);
+            double dy = mouse.Y - (GetTopOrZero() + _centerY);
+            if (dx * dx + dy * dy < 1e-6) return;
+
+            // złączenie leży lokalnie "w górę" (0, -1) od środka
+            _rotateTransform.Angle = Math.Atan2(dx, -dy) * 180.0 / Math.PI;
+        }
+        private void ApexRing_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+            _isRotating = false;
+            (sender as UIElement)?.ReleaseMouseCapture();
         }
 
         private void ArrowHead1_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

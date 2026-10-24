@@ -45,7 +45,7 @@
 
                     <ui:NavigationViewItem Content="Pomoc">
                         <ui:NavigationViewItem.MenuItems>
-                            <ui:NavigationViewItem Content="O programie" Tag="closeFrame" PreviewMouseLeftButtonUp="NavItemOnClick" MinWidth="130"/>
+                            <ui:NavigationViewItem Content="O programie" Tag="showAbout" PreviewMouseLeftButtonUp="NavItemOnClick" MinWidth="130"/>
                             <ui:NavigationViewItem Content="Sterowanie" Tag="showControlsHelp" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>

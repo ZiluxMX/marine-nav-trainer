@@ -1,4 +1,5 @@
 ﻿using marine_nav_trainer.Map;
+using marine_nav_trainer.Map.UI.Views;
 using marine_nav_trainer.Windows.Views;
 using System.Windows.Controls;
 using System.Windows;
@@ -33,6 +34,9 @@ namespace marine_nav_trainer {
                     case "showControlsHelp":
                         HelpControlsWindow.ShowSingle(this);
                         break;
+                    case "showAbout":
+                        AboutWindow.ShowSingle(this);
+                        break;
                 }
                 CollapseMenu(item);
             }
@@ -60,9 +64,24 @@ namespace marine_nav_trainer {
             DisposeCurrentContent();
         }
 
+        // uczeń rozwiązuje zadanie - mapa startuje dopiero po poprawnym wczytaniu pliku
         private void SolveExercise() {
+            var dialog = new TaskSelectionWindow(AppPaths.JsonsDir) {
+                Owner = this
+            };
+
+            if (dialog.ShowDialog() != true || dialog.SelectedTaskPath == null)
+                return;
+
+            var view = new TaskSolveView();
+            if (!view.TryLoadTask(dialog.SelectedTaskPath)) {
+                view.Dispose();
+                return;
+            }
+
             DisposeCurrentContent();
-            SetContent(new MapView());
+            view.CloseRequested += (_, _) => DisposeCurrentContent();
+            SetContent(view);
         }
 
         private void OpenFileList() {

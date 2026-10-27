@@ -3,7 +3,6 @@ using marine_nav_trainer.Navigation.Models;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace marine_nav_trainer.Windows.Views {
     public partial class TaskCreatorView : UserControl, IDisposable {
@@ -14,6 +13,7 @@ namespace marine_nav_trainer.Windows.Views {
         public TaskCreatorView() {
             InitializeComponent();
             CalculatorViewControl.InsertPointRequested += OnInsertPointRequested;
+            CalculatorViewControl.NavigationDataRequested += OnNavigationDataRequested;
             MapViewControl.FrameVisibilityChanged += OnFrameVisibilityChanged;
             MapViewControl.NavigationDataRequested += OnNavigationDataRequested;
             MapViewControl.NavigationDataLoaded += OnNavigationDataLoaded;
@@ -25,7 +25,9 @@ namespace marine_nav_trainer.Windows.Views {
                 ApplyFrameVisibility(frame);
         }
 
-        private void OnFrameVisibilityChanged(object? sender, MapFrame frame) => ApplyFrameVisibility(frame);
+        private void OnFrameVisibilityChanged(object? sender, MapFrame frame) {
+            ApplyFrameVisibility(frame);
+        }
 
         private void ApplyFrameVisibility(MapFrame frame) {
             UIElement control = frame switch {
@@ -48,6 +50,7 @@ namespace marine_nav_trainer.Windows.Views {
             navigation.Variation = VariationTableViewControl.GetVariation();
             navigation.VariationList = VariationTableViewControl.GetLocalVariations();
             navigation.TimeZone = VariationTableViewControl.GetTimeZone();
+            navigation.StartDate = VariationTableViewControl.StartDate;
         }
 
         // wczytanie zadania - dane do ramek
@@ -76,23 +79,7 @@ namespace marine_nav_trainer.Windows.Views {
 
         // ramki nie mają własnego przewijania - scroll rusza całym panelem
         private void SidePanelScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
-            // CmbBox przejmuje priorytet scrolla
-            if (!IsInsideSidePanel(e.OriginalSource as DependencyObject))
-                return;
-
-            SidePanelScrollViewer.ScrollToVerticalOffset(SidePanelScrollViewer.VerticalOffset - e.Delta);
-            e.Handled = true;
-        }
-
-        private bool IsInsideSidePanel(DependencyObject? source) {
-            while (source != null) {
-                if (ReferenceEquals(source, SidePanelScrollViewer))
-                    return true;
-
-                source = VisualTreeHelper.GetParent(source);
-            }
-
-            return false;
+            SidePanelScroll.OnMouseWheel(SidePanelScrollViewer, e);
         }
 
         private void OnInsertPointRequested(object? sender, InsertPointEventArgs e) {
@@ -105,8 +92,9 @@ namespace marine_nav_trainer.Windows.Views {
                     MessageBoxImage.Warning);
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e) =>
+        private void CloseButton_Click(object sender, RoutedEventArgs e) {
             CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
 
         public void Dispose() {
             if (_disposed)
@@ -114,6 +102,7 @@ namespace marine_nav_trainer.Windows.Views {
             _disposed = true;
 
             CalculatorViewControl.InsertPointRequested -= OnInsertPointRequested;
+            CalculatorViewControl.NavigationDataRequested -= OnNavigationDataRequested;
             MapViewControl.FrameVisibilityChanged -= OnFrameVisibilityChanged;
             MapViewControl.NavigationDataRequested -= OnNavigationDataRequested;
             MapViewControl.NavigationDataLoaded -= OnNavigationDataLoaded;

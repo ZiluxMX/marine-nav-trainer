@@ -28,6 +28,9 @@ namespace marine_nav_trainer {
                     case "solveExercise":
                         SolveExercise();
                         break;
+                    case "compareExercise":
+                        CompareExercise();
+                        break;
                     case "fileList":
                         OpenFileList();
                         break;
@@ -56,7 +59,7 @@ namespace marine_nav_trainer {
         private void CreateExercise() {
             DisposeCurrentContent();
             _taskCreatorView = new TaskCreatorView();
-            _taskCreatorView.CloseRequested += (_, _) => DisposeCurrentContent();
+            _taskCreatorView.CloseRequested += OnCloseRequested;
             SetContent(_taskCreatorView);
         }
 
@@ -80,15 +83,47 @@ namespace marine_nav_trainer {
             }
 
             DisposeCurrentContent();
-            view.CloseRequested += (_, _) => DisposeCurrentContent();
+            view.CloseRequested += OnCloseRequested;
             SetContent(view);
+        }
+
+        // porównanie zadania
+        private void CompareExercise() {
+            var box = new Wpf.Ui.Controls.MessageBox {
+                Title = "Info",
+                Content = "Okno jeszcze w budowie :)",
+                CloseButtonText = "OK",
+                Owner = this
+            };
+            box.ShowDialogAsync();
+
+            //var dialog = new TaskSelectionWindow(AppPaths.JsonsDir) {
+            //    Owner = this
+            //};
+
+            //if (dialog.ShowDialog() != true || dialog.SelectedTaskPath == null)
+            //    return;
+
+            //var view = new TaskCompareView();
+            //if (!view.TryLoadTask(dialog.SelectedTaskPath)) {
+            //    view.Dispose();
+            //    return;
+            //}
+
+            //DisposeCurrentContent();
+            //view.CloseRequested += OnCloseRequested;
+            //SetContent(view);
         }
 
         private void OpenFileList() {
             DisposeCurrentContent();
             var view = new FileListView();
-            view.CloseRequested += (_, _) => DisposeCurrentContent();
+            view.CloseRequested += OnCloseRequested;
             SetContent(view);
+        }
+
+        private void OnCloseRequested(object? sender, EventArgs e) {
+            DisposeCurrentContent();
         }
 
         private void SetContent(object content) {

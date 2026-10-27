@@ -38,6 +38,7 @@
                         <ui:NavigationViewItem.MenuItems >
                             <ui:NavigationViewItem Content="Utwórz nowe zadanie" Tag="createExercise" PreviewMouseLeftButtonUp="NavItemOnClick"  MinWidth="180"/>
                             <ui:NavigationViewItem Content="Rozwiąż zadanie" Tag="solveExercise" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+                            <ui:NavigationViewItem Content="Porównaj zadanie" Tag="compareExercise" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>
 

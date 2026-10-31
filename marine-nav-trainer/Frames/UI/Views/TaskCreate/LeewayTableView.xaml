@@ -1,0 +1,114 @@
+﻿<UserControl x:Class="marine_nav_trainer.Navigation.UI.Views.LeewayTableView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:marine_nav_trainer.Navigation.UI.Views"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             MinWidth="320"
+             d:DesignHeight="250" d:DesignWidth="550">
+    <Grid>
+        <ui:Card VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="15,5,15,5"
+                        BorderThickness="0,1,0,1"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBlock Text="Tabela dryfu" FontTypography="Subtitle" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Grid Grid.Row="1" Margin="12,4,12,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Nagłówki -->
+                    <ui:TextBlock Grid.Row="0" Grid.Column="0" Text="Wiatr" FontTypography="BodyStrong" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:TextBlock Grid.Row="0" Grid.Column="2" Text="Od (°)" FontTypography="BodyStrong" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:TextBlock Grid.Row="0" Grid.Column="4" Text="Do (°)" FontTypography="BodyStrong" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:TextBlock Grid.Row="0" Grid.Column="6" Text="Dryf (°)" FontTypography="BodyStrong" Margin="0,0,0,6" VerticalAlignment="Center"/>
+
+                    <!-- Bajdewind - close_hauled -->
+                    <ui:TextBlock Grid.Row="1" Grid.Column="0" Text="Bajdewind" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:NumberBox x:Name="CloseHauledMinBox" Grid.Row="1" Grid.Column="2"
+                                  Value="23" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="CloseHauledMaxBox" Grid.Row="1" Grid.Column="4"
+                                  Value="44.9" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="CloseHauledValueBox" Grid.Row="1" Grid.Column="6"
+                                  Value="10" Minimum="-360" Maximum="360" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+
+                    <!-- Półwiatr - beam_reach -->
+                    <ui:TextBlock Grid.Row="2" Grid.Column="0" Text="Półwiatr" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:NumberBox x:Name="BeamReachMinBox" Grid.Row="2" Grid.Column="2"
+                                  Value="45" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="BeamReachMaxBox" Grid.Row="2" Grid.Column="4"
+                                  Value="89.9" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="BeamReachValueBox" Grid.Row="2" Grid.Column="6"
+                                  Value="5" Minimum="-360" Maximum="360" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+
+                    <!-- Baksztag - broad_reach -->
+                    <ui:TextBlock Grid.Row="3" Grid.Column="0" Text="Baksztag" Margin="0,0,0,6" VerticalAlignment="Center"/>
+                    <ui:NumberBox x:Name="BroadReachMinBox" Grid.Row="3" Grid.Column="2"
+                                  Value="90" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="BroadReachMaxBox" Grid.Row="3" Grid.Column="4"
+                                  Value="134.9" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="BroadReachValueBox" Grid.Row="3" Grid.Column="6"
+                                  Value="3" Minimum="-360" Maximum="360" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+
+                    <!-- Fordewind - running -->
+                    <ui:TextBlock Grid.Row="4" Grid.Column="0" Text="Fordewind" VerticalAlignment="Center"/>
+                    <ui:NumberBox x:Name="RunningMinBox" Grid.Row="4" Grid.Column="2"
+                                  Value="135" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="RunningMaxBox" Grid.Row="4" Grid.Column="4"
+                                  Value="180" Minimum="0" Maximum="180" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                    <ui:NumberBox x:Name="RunningValueBox" Grid.Row="4" Grid.Column="6"
+                                  Value="0" Minimum="-360" Maximum="360" MaxDecimalPlaces="1"
+                                  ClearButtonEnabled="False" SpinButtonPlacementMode="Inline"
+                                  MinWidth="110" MaxWidth="140" Padding="8,4,8,4" Margin="0,0,0,6"/>
+                </Grid>
+            </Grid>
+        </ui:Card>
+    </Grid>
+</UserControl>

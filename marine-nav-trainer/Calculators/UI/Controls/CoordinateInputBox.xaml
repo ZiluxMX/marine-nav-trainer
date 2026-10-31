@@ -21,17 +21,18 @@
                           TextChanged="DecimalBox_TextChanged"/>
 
             <ComboBox x:Name="CardinalBox" Grid.Column="4"
-                      MinWidth="52"
+                      MinWidth="60"
                       Padding="8,4,8,4"
                       SelectionChanged="Cardinal_SelectionChanged"/>
         </Grid>
         <Grid Margin="0,4,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <ui:NumberBox x:Name="DegBox" Grid.Column="0"
+                          MinWidth="50"
                           SpinButtonPlacementMode="Hidden"
                           ClearButtonEnabled="False"
                           MaxDecimalPlaces="0"

@@ -1,0 +1,166 @@
+﻿<UserControl x:Class="marine_nav_trainer.Windows.Views.TaskDescriptionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:marine_nav_trainer.Windows.Views"
+             xmlns:md="clr-namespace:MdXaml;assembly=MdXaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             MinWidth="320"
+             d:DesignHeight="450" d:DesignWidth="550">
+    <Grid>
+        <ui:Card VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="15,5,15,5"
+                        BorderThickness="0,1,0,1"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBlock Text="Opis zadania" FontTypography="Subtitle" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Sekcja meta zadania -->
+                <StackPanel Grid.Row="1" Margin="12,4,12,4">
+                    <ui:TextBlock Text="Tytuł"/>
+                    <ui:TextBox x:Name="TitleBox" Margin="0,2,0,0"
+                                Padding="8,4,8,4"
+                                MaxLength="120"
+                                PlaceholderText="Tytuł zadania"/>
+
+                    <ui:TextBlock Text="Autor" Margin="0,6,0,0"/>
+                    <ui:TextBox x:Name="AuthorBox" Margin="0,2,0,0"
+                                Padding="8,4,8,4"
+                                MaxLength="120"
+                                PlaceholderText="Nazwa autora"/>
+
+                    <ui:TextBlock Text="Treść zadania" Margin="0,6,0,0"/>
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            
+                            <!-- Pasek Markdown -->
+                            <WrapPanel x:Name="MarkdownToolbar" Orientation="Horizontal">
+                                <ui:Button ToolTip="Pogrubienie" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="BoldOnClick">
+                                    <ui:SymbolIcon Symbol="TextBold24" FontSize="16"/>
+                                </ui:Button>
+                                <ui:Button ToolTip="Kursywa" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="ItalicOnClick">
+                                    <ui:SymbolIcon Symbol="TextItalic24" FontSize="16"/>
+                                </ui:Button>
+                                <ui:Button ToolTip="Nagłówek" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="HeaderOnClick">
+                                    <ui:SymbolIcon Symbol="TextHeader124" FontSize="16"/>
+                                </ui:Button>
+                                <ui:Button ToolTip="Lista punktowana" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="BulletListOnClick">
+                                    <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="16"/>
+                                </ui:Button>
+                                <ui:Button ToolTip="Lista numerowana" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="NumberListOnClick">
+                                    <ui:SymbolIcon Symbol="TextNumberListLtr24" FontSize="16"/>
+                                </ui:Button>
+                                <ui:Button ToolTip="Cytat" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           Appearance="Secondary" 
+                                           Click="QuoteOnClick">
+                                    <ui:SymbolIcon Symbol="TextQuote24" FontSize="16"/>
+                                </ui:Button>
+                            </WrapPanel>
+                            
+                            <!-- Znaki nawigacyjne -->
+                            <WrapPanel x:Name="SymbolsToolbar" Orientation="Horizontal">
+                                <ui:Button Content="°" Tag="°" 
+                                           ToolTip="Stopień" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           MinWidth="30" 
+                                           Appearance="Secondary" 
+                                           Click="InsertSymbolOnClick"/>
+                                <ui:Button Content="′" Tag="′" 
+                                           ToolTip="Minuta" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           MinWidth="30" 
+                                           Appearance="Secondary" 
+                                           Click="InsertSymbolOnClick"/>
+                                <ui:Button Content="δ" Tag="δ" 
+                                           ToolTip="Delta - dewiacja" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           MinWidth="30" 
+                                           Appearance="Secondary" 
+                                           Click="InsertSymbolOnClick"/>
+                                <ui:Button Content="φ" Tag="φ" 
+                                           ToolTip="Fi - długość geograficzna" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           MinWidth="30" 
+                                           Appearance="Secondary" 
+                                           Click="InsertSymbolOnClick"/>
+                                <ui:Button Content="λ" Tag="λ" 
+                                           ToolTip="Lambda - długość geograficzna" 
+                                           Margin="4,4,4,4" Padding="6,1,6,1"
+                                           MinWidth="30" 
+                                           Appearance="Secondary" 
+                                           Click="InsertSymbolOnClick"/>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <ui:Button x:Name="TogglePreviewButton" Grid.Column="1"
+                                   Content="Podgląd"
+                                   ToolTip="Przełącz edycję i podgląd"
+                                   VerticalAlignment="Top"
+                                   Margin="4,4,4,4" Padding="8,4,8,4"
+                                   Appearance="Secondary"
+                                   Click="TogglePreviewOnClick"/>
+                    </Grid>
+
+                    <ui:TextBox x:Name="ContentBox" 
+                                Margin="0,2,0,0" Padding="8,4,8,4"
+                                MinHeight="200"
+                                AcceptsReturn="True"
+                                AcceptsTab="True"
+                                TextWrapping="Wrap"
+                                SpellCheck.IsEnabled="True"
+                                VerticalContentAlignment="Top"
+                                VerticalScrollBarVisibility="Auto"
+                                PlaceholderText="Treść zadania"
+                                PreviewKeyDown="ContentBox_PreviewKeyDown"/>
+
+                    <Border x:Name="PreviewBorder" 
+                            Margin="0,2,0,0" Padding="8,4,8,4"
+                            Visibility="Collapsed"
+                            MinHeight="200"
+                            MaxWidth="{Binding ActualWidth, ElementName=TitleBox}"
+                            HorizontalAlignment="Stretch"
+                            CornerRadius="4"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                        <md:MarkdownScrollViewer x:Name="ContentPreview"
+                                                 MarkdownStyleName="Standard"
+                                                 VerticalScrollBarVisibility="Disabled"
+                                                 HorizontalScrollBarVisibility="Auto"
+                                                 Background="Transparent"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ui:Card>
+    </Grid>
+</UserControl>

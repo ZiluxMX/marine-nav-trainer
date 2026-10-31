@@ -11,6 +11,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
         public const double PointSnapRadius = 20;
         public double AngleMain { get; private set; }
         public double AngleRed { get; private set; }
+        public event EventHandler? AnglesChanged;
         private readonly double _size;
         private readonly double _center;
         private bool _isDragging = false;
@@ -33,6 +34,8 @@ namespace marine_nav_trainer.Map.UI.Controls {
             _rotateTransform = new RotateTransform(0);
             this.RenderTransform = _rotateTransform;
             this.RenderTransformOrigin = new Point(0.5, 0.5);
+
+            Panel.SetZIndex(this, int.MaxValue - 1); // pod kroczkiem
 
             DrawTriangle();
             DrawScale();
@@ -70,15 +73,18 @@ namespace marine_nav_trainer.Map.UI.Controls {
                     x1 = _center + Math.Sin(rad) * (radius - _size / 2);
                     y1 = _center + Math.Cos(rad) * (radius - _size / 2);
                     thicknes = 2;
-                } else if (major) {
+                }
+                else if (major) {
                     x1 = _center + Math.Sin(rad) * (radius - (_size / 7));
                     y1 = _center + Math.Cos(rad) * (radius - (_size / 7));
                     thicknes = 2;
-                } else if (midMajor) {
+                }
+                else if (midMajor) {
                     x1 = _center + Math.Sin(rad) * (radius - (_size / 10));
                     y1 = _center + Math.Cos(rad) * (radius - (_size / 10));
                     thicknes = 1;
-                } else {
+                }
+                else {
                     x1 = _center + Math.Sin(rad) * (radius - (_size / 15));
                     y1 = _center + Math.Cos(rad) * (radius - (_size / 15));
                     thicknes = 0.5;
@@ -151,7 +157,8 @@ namespace marine_nav_trainer.Map.UI.Controls {
                             modX = -25;
                             modY = 9;
                         }
-                    } else if (displayAngle > 110) {
+                    }
+                    else if (displayAngle > 110) {
                         modX = -displayAngle / 10;
                         modY = displayAngle / 15;
                         if (displayAngle >= 130) {
@@ -297,6 +304,58 @@ namespace marine_nav_trainer.Map.UI.Controls {
             return false;
         }
 
+        // Segment napisany z pomocą SI: Claude
+        private static bool TryGetSeparationVector(Point[] a, Point[] b, out Vector separation) {
+            separation = new Vector(0, 0);
+            double minOverlap = double.MaxValue;
+            Vector smallestAxis = new Vector(0, 0);
+
+            if (!AccumulateMinOverlap(a, b, ref minOverlap, ref smallestAxis)) return false;
+            if (!AccumulateMinOverlap(b, a, ref minOverlap, ref smallestAxis)) return false;
+
+            // MTV ma wypychać 'a' od 'b'
+            Vector dir = Centroid(a) - Centroid(b);
+            if (dir * smallestAxis < 0) smallestAxis = -smallestAxis;
+
+            separation = smallestAxis * minOverlap;
+            return true;
+        }
+
+        // Sprawdza osie (normalne krawędzi) 'poly' i zapamiętuje tę z najmniejszym zachodzeniem.
+        // Gdy trafi na oś rozdzielającą -> brak kolizji -> false.
+        private static bool AccumulateMinOverlap(Point[] poly, Point[] other, ref double minOverlap, ref Vector smallestAxis) {
+            for (int i = 0; i < poly.Length; i++) {
+                Point p1 = poly[i];
+                Point p2 = poly[(i + 1) % poly.Length];
+                var axis = new Vector(-(p2.Y - p1.Y), p2.X - p1.X);
+                double len = axis.Length;
+                if (len < 1e-9) continue;
+                axis /= len;
+
+                Project(poly, axis, out double minA, out double maxA);
+                Project(other, axis, out double minB, out double maxB);
+
+                double overlap = Math.Min(maxA, maxB) - Math.Max(minA, minB);
+                if (overlap <= 0) return false;
+
+                if (overlap < minOverlap) {
+                    minOverlap = overlap;
+                    smallestAxis = axis;
+                }
+            }
+            return true;
+        }
+
+        private static Vector Centroid(Point[] poly) {
+            double x = 0, y = 0;
+            foreach (var p in poly) {
+                x += p.X;
+                y += p.Y;
+            }
+            return new Vector(x / poly.Length, y / poly.Length);
+        }
+        // Koniec segmentu przy pomocy SI
+
         private static void Project(Point[] poly, Vector axis, out double min, out double max) {
             min = max = axis.X * poly[0].X + axis.Y * poly[0].Y;
             for (int i = 1; i < poly.Length; i++) {
@@ -396,8 +455,6 @@ namespace marine_nav_trainer.Map.UI.Controls {
 
             double targetLeft = _dragStartElement.X + dx;
             double targetTop = _dragStartElement.Y + dy;
-            double curLeft = Canvas.GetLeft(this);
-            double curTop = Canvas.GetTop(this);
             double angle = _rotateTransform.Angle;
 
             // Przyciąganie do punktu
@@ -406,17 +463,53 @@ namespace marine_nav_trainer.Map.UI.Controls {
             if (!CollidesWithSiblings(targetLeft, targetTop, angle)) {
                 Canvas.SetLeft(this, targetLeft);
                 Canvas.SetTop(this, targetTop);
+                return;
             }
-            else if (!snapped && !CollidesWithSiblings(targetLeft, curTop, angle)) {
-                // ruch wzdłuż osi X, gdy oś Y jest zablokowana
+
+            // Przyklejony do punktu i kolizja -> nie ślizgamy
+            if (snapped) return;
+
+            // Kolizja + ślizg
+            if (TrySlideAlongSiblings(ref targetLeft, ref targetTop, angle)) {
                 Canvas.SetLeft(this, targetLeft);
-            }
-            else if (!snapped && !CollidesWithSiblings(curLeft, targetTop, angle)) {
-                // ruch wzdłuż osi Y, gdy oś X jest zablokowana
                 Canvas.SetTop(this, targetTop);
             }
-            // przyklejony/kolizja/zablokowany -> brak ruchu
+
+            // kolizja bez możliwości ślizgu -> brak ruchu
         }
+
+        // Zsuwa trójkąt wzdłuż stykających się krawędzi: wypycha go z kolizji po najmniejszym wektorze rozsunięcia (MTV)
+        // Segment napisany z pomocą SI: Claude
+        private bool TrySlideAlongSiblings(ref double left, ref double top, double angleDeg) {
+            var parent = Parent as Canvas;
+            if (parent == null) return false;
+
+            Point[] mine = GetTriangleWorldPoints(left, top, angleDeg);
+
+            Vector push = new Vector(0, 0);
+            foreach (var child in parent.Children) {
+                if (child is NavTriangle other &&
+                    !ReferenceEquals(other, this) &&
+                    other.Visibility == Visibility.Visible) {
+                    if (TryGetSeparationVector(mine, other.GetTriangleWorldPoints(), out Vector separation))
+                        push += separation;
+                }
+            }
+
+            if (push.LengthSquared < 1e-9) return false;
+
+            double slidLeft = left + push.X;
+            double slidTop = top + push.Y;
+
+            // Ślizg po wypchnięciu z kolizji
+            if (CollidesWithSiblings(slidLeft, slidTop, angleDeg)) return false;
+
+            left = slidLeft;
+            top = slidTop;
+            return true;
+        }
+        // Koniec segmentu SI
+
         private void Handle_MouseLeftButtonUp(object sender, MouseButtonEventArgs mousee) {
             _isDragging = false;
             _handleLine?.ReleaseMouseCapture();
@@ -444,7 +537,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             double angle = (Math.Atan2(dy, dx) * 180 / Math.PI - 135); // -45 -> 90
             angle = Math.Round(angle * 2) / 2;  // round do 0.5
 
-            double realAngle = (angle + 135) % 360;
+            double realAngle = (angle + 135 + 360) % 360;
             double realAngleRed = (realAngle + 180) % 360;
             //Debug.WriteLine($"angle={angle}; oblicz={realAngle}; oblicz RED={realAngleRed}");
 
@@ -456,6 +549,7 @@ namespace marine_nav_trainer.Map.UI.Controls {
             AngleRed = realAngleRed;
 
             _rotateTransform.Angle = angle;
+            AnglesChanged?.Invoke(this, EventArgs.Empty);
         }
         private void RotationHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs mouse) {
             _isRotating = false;

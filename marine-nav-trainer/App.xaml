@@ -9,7 +9,36 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
+                <ResourceDictionary Source="/Calculators/UI/Resources/CalculatorIcons.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Siatka tabel w ramkach - wspólny wygląd -->
+            <Style x:Key="TableFrame" TargetType="Border">
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="1,1,0,0"/>
+            </Style>
+
+            <Style x:Key="TableHeaderCell" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                <Setter Property="Padding" Value="8,5"/>
+            </Style>
+
+            <Style x:Key="TableCell" TargetType="Border">
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                <Setter Property="Padding" Value="8,4"/>
+            </Style>
+
+            <Style x:Key="TableHeaderText" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
+            <Style x:Key="TableCellText" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

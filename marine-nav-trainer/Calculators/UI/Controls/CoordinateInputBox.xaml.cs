@@ -1,3 +1,4 @@
+using marine_nav_trainer.Calculators.Core;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
                 new PropertyMetadata(true, OnIsLatitudeChanged));
 
         private bool _updating;
+        public event EventHandler? ValueChanged;
 
         public CoordinateInputBox() {
             InitializeComponent();
@@ -29,13 +31,20 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
             set => SetValue(IsLatitudeProperty, value);
         }
 
+        public GeoCoordinate? Coordinate {
+            get => Value is double d
+                ? GeoCoordinate.FromDecimal(d, IsLatitude ? CoordinateAxis.Latitude : CoordinateAxis.Longitude)
+                : null;
+            set => Value = value?.DecimalDegrees;
+        }
+
         private double MaxDegrees => IsLatitude ? 90 : 180;
 
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var box = (CoordinateInputBox)d;
-            if (box._updating)
-                return;
-            box.ShowValue((double?)e.NewValue);
+            if (!box._updating)
+                box.ShowValue((double?)e.NewValue);
+            box.ValueChanged?.Invoke(box, EventArgs.Empty);
         }
 
         private static void OnIsLatitudeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -54,18 +63,19 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
                 int selected = CardinalBox.SelectedIndex < 0 ? 0 : CardinalBox.SelectedIndex;
                 CardinalBox.ItemsSource = IsLatitude ? new[] { "N", "S" } : new[] { "E", "W" };
                 CardinalBox.SelectedIndex = selected;
-            } finally {
+            }
+            finally {
                 _updating = false;
             }
         }
 
-        /// <summary>Ustawia wszystkie pola na podstawie wartości (np. wynik obliczeń).</summary>
         private void ShowValue(double? value) {
             _updating = true;
             try {
                 DecimalBox.Value = value;
                 UpdateDegMinBoxes(value);
-            } finally {
+            }
+            finally {
                 _updating = false;
             }
         }
@@ -80,9 +90,9 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
             int deg = (int)Math.Floor(abs);
             double min = Math.Round((abs - deg) * 60.0, 4);
 
-            if (min >= 60) { 
-                deg++; 
-                min = 0; 
+            if (min >= 60) {
+                deg++;
+                min = 0;
             }
             DegBox.Value = deg;
             MinBox.Value = min;
@@ -98,12 +108,14 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
                     d = Math.Clamp(d, -MaxDegrees, MaxDegrees);
                     SetCurrentValue(ValueProperty, (double?)d);
                     UpdateDegMinBoxes(d);
-                } else {
+                }
+                else {
                     SetCurrentValue(ValueProperty, null);
                     if (string.IsNullOrWhiteSpace(DecimalBox.Text))
                         UpdateDegMinBoxes(null);
                 }
-            } finally {
+            }
+            finally {
                 _updating = false;
             }
         }
@@ -129,7 +141,8 @@ namespace marine_nav_trainer.Calculators.UI.Controls {
                 d = Math.Clamp(Math.Round(d, 6), -MaxDegrees, MaxDegrees);
                 SetCurrentValue(ValueProperty, (double?)d);
                 DecimalBox.Value = d;
-            } finally {
+            }
+            finally {
                 _updating = false;
             }
         }

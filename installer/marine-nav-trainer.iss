@@ -3,8 +3,8 @@
 ; Non-commercial use only
 
 #define MyAppName "Marine Nav Trainer"
-#define MyAppVersion "0.0.1"
-#define MyAppPublisher "Uniwersytet Jagiellonski"
+#define MyAppVersion "0.0.9"
+#define MyAppPublisher "Uniwersytet Jagiellonski (MT)"
 #define MyAppExeName "MarineNavTrainer.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"

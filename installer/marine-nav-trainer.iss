@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Marine Nav Trainer"
-#define MyAppVersion "0.0.9"
+#define MyAppVersion "0.2.0"
 #define MyAppPublisher "Uniwersytet Jagiellonski (MT)"
 #define MyAppExeName "MarineNavTrainer.exe"
 #define MyAppAssocName MyAppName + " File"
@@ -48,6 +48,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#MyAppPublishDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

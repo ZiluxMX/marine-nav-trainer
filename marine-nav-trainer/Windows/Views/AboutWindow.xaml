@@ -68,8 +68,14 @@
                 <TextBlock Style="{StaticResource AboutText}" Text="PdfiumViewer.Native.x86_64.v8-xfa 2018.4.8.256 - silnik PDFium"/>
                 <TextBlock Style="{StaticResource AboutText}" Text="MdXaml 1.27.0 - podgląd treści zadania w Markdown"/>
 
+                <TextBlock Style="{StaticResource AboutSection}" Text="Grafiki"/>
+                <TextBlock Style="{StaticResource AboutText}" Text="Ikona aplikacji: Designed by rawpixel.com / Freepik"/>
+                <TextBlock Style="{StaticResource AboutText}" Text="Tło ekranu głównego: Designed by macrovector / Freepik"/>
+                <TextBlock Style="{StaticResource AboutText}" Text="www.freepik.com"/>
+
                 <TextBlock Style="{StaticResource AboutSection}" Text="Licencja"/>
-                <TextBlock Style="{StaticResource AboutText}" Text="TODO: informacja o licencji"/>
+                <TextBlock Style="{StaticResource AboutText}" Text="Licencja MIT. Komponenty i grafiki stron trzecich podlegają własnym licencjom."/>
+                <TextBlock Style="{StaticResource AboutText}" Text="Szczegóły w plikach LICENSE i THIRD-PARTY-NOTICES.txt w katalogu programu."/>
 
             </StackPanel>
         </ScrollViewer>

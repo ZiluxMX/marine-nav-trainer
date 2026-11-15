@@ -19,3 +19,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+------------------------------------------------------------------------------
+Third-party components and assets
+
+The MIT License above applies only to the source code of Marine Nav Trainer
+written by the copyright holder. It does not apply to:
+
+  - third-party libraries and runtime components distributed with the
+    Software,
+  - graphic assets in the Assets/ directory that were created by third
+    parties or derived from third-party works (including app.ico,
+    Backgrounds/mainMap.png and Backgrounds/BackgroundMap.pdf).
+
+These components are subject to their own licenses and terms of use, listed
+in the THIRD-PARTY-NOTICES.txt file.

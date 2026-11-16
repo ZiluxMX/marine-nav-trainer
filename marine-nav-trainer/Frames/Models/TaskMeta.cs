@@ -4,5 +4,6 @@
         public string Desc { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
         public string ContentMd { get; set; } = string.Empty;
+        public string CommentMd { get; set; } = string.Empty;
     }
 }

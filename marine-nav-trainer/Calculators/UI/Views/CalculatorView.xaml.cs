@@ -9,9 +9,21 @@ namespace marine_nav_trainer.Calculators.UI.Views {
     public partial class CalculatorView : UserControl, IDisposable {
         private readonly Dictionary<string, UserControl> _viewCache = [];
         private bool _disposed;
+        private bool _isInsertPointEnabled = true;
 
         public event EventHandler<InsertPointEventArgs>? InsertPointRequested;
         public event EventHandler<NavigationData>? NavigationDataRequested;
+
+        // [Wstaw punkt] w zakładkach
+        public bool IsInsertPointEnabled {
+            get { return _isInsertPointEnabled; }
+            set {
+                _isInsertPointEnabled = value;
+                foreach (var view in _viewCache.Values)
+                    if (view is ICoordinatePointProducer producer)
+                        producer.IsInsertPointEnabled = value;
+            }
+        }
 
         public CalculatorView() {
             InitializeComponent();
@@ -44,8 +56,10 @@ namespace marine_nav_trainer.Calculators.UI.Views {
                     "runningFix" => new RunningFixTabView(),
                     _ => throw new Exception("Unknown view")
                 };
-                if (view is ICoordinatePointProducer producer)
+                if (view is ICoordinatePointProducer producer) {
                     producer.InsertPointRequested += OnTabInsertPointRequested;
+                    producer.IsInsertPointEnabled = _isInsertPointEnabled;
+                }
 
                 if (view is INavigationDataUser navigationUser)
                     navigationUser.NavigationDataRequested += OnTabNavigationDataRequested;

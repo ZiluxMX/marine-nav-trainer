@@ -15,7 +15,7 @@ namespace marine_nav_trainer.Windows.Views {
                                ?? "Marine Nav Trainer";
 
             //string version = assembly.GetName().Version?.ToString(3) ?? "0.0.10";
-            string version = "0.1.3";
+            string version = "0.2.0";
             VersionText.Text = $"Wersja {version}";
         }
 

@@ -87,32 +87,12 @@ namespace marine_nav_trainer {
             SetContent(view);
         }
 
-        // porównanie zadania
+        // porównanie zadania - pliki wybierane w ramce Wybór zadań
         private void CompareExercise() {
-            var box = new Wpf.Ui.Controls.MessageBox {
-                Title = "Info",
-                Content = "Okno jeszcze w budowie :)",
-                CloseButtonText = "OK",
-                Owner = this
-            };
-            box.ShowDialogAsync();
-
-            //var dialog = new TaskSelectionWindow(AppPaths.JsonsDir) {
-            //    Owner = this
-            //};
-
-            //if (dialog.ShowDialog() != true || dialog.SelectedTaskPath == null)
-            //    return;
-
-            //var view = new TaskCompareView();
-            //if (!view.TryLoadTask(dialog.SelectedTaskPath)) {
-            //    view.Dispose();
-            //    return;
-            //}
-
-            //DisposeCurrentContent();
-            //view.CloseRequested += OnCloseRequested;
-            //SetContent(view);
+            DisposeCurrentContent();
+            var view = new TaskCompareView();
+            view.CloseRequested += OnCloseRequested;
+            SetContent(view);
         }
 
         private void OpenFileList() {

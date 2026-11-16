@@ -1,0 +1,95 @@
+<UserControl x:Class="marine_nav_trainer.Windows.Views.TaskSelectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:marine_nav_trainer.Windows.Views"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             MinWidth="320"
+             d:DesignHeight="350" d:DesignWidth="550">
+    <Grid>
+        <ui:Card VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="15,5,15,5"
+                        BorderThickness="0,1,0,1"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBlock Text="Wybór zadań" FontTypography="Subtitle" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="12,4,12,8">
+                    <!-- Zadanie wzorcowe -->
+                    <ui:TextBlock Text="Zadanie wzorcowe" FontTypography="BodyStrong"/>
+                    <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox x:Name="ReferenceFileBox" Grid.Column="0"
+                                    IsReadOnly="True"
+                                    PlaceholderText="Nie wybrano pliku">
+                            <ui:TextBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="Green"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="Green"/>
+                            </ui:TextBox.Resources>
+                        </ui:TextBox>
+                        <ui:Button Grid.Column="1"
+                                   Content="Wybierz..."
+                                   Margin="8,0,0,0"
+                                   Appearance="Secondary"
+                                   Click="SelectReferenceOnClick"/>
+                    </Grid>
+
+                    <!-- Zadanie do sprawdzenia -->
+                    <ui:TextBlock Text="Zadanie do sprawdzenia" FontTypography="BodyStrong" Margin="0,8,0,0"/>
+                    <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox x:Name="CheckedFileBox" Grid.Column="0"
+                                    IsReadOnly="True"
+                                    PlaceholderText="Nie wybrano pliku">
+                            <ui:TextBox.Resources>
+                                <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="Blue"/>
+                                <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="Blue"/>
+                            </ui:TextBox.Resources>
+                        </ui:TextBox>
+                        <ui:Button Grid.Column="1"
+                                   Content="Wybierz..."
+                                   Margin="8,0,0,0"
+                                   Appearance="Secondary"
+                                   Click="SelectCheckedOnClick"/>
+                    </Grid>
+
+                    <!-- Rozbieżności sekcji: meta, chart, navigation -->
+                    <Border Margin="0,10,0,0" Padding="0,10,0,0"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                        <StackPanel>
+                            <ui:TextBlock Text="Rozbieżności" FontTypography="BodyStrong"/>
+                            <ui:TextBlock x:Name="DifferencesText" Margin="0,2,0,0"
+                                          TextWrapping="Wrap"
+                                          Text="Wybierz oba pliki, aby sprawdzić zgodność zadań."/>
+                        </StackPanel>
+                    </Border>
+
+                    <ui:Button x:Name="CompareButton"
+                               Content="Porównaj zadania"
+                               Margin="0,10,0,0"
+                               HorizontalAlignment="Stretch"
+                               Appearance="Primary"
+                               IsEnabled="False"
+                               Click="CompareOnClick"/>
+                </StackPanel>
+            </Grid>
+        </ui:Card>
+    </Grid>
+</UserControl>

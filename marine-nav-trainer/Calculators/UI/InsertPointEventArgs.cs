@@ -11,5 +11,6 @@ namespace marine_nav_trainer.Calculators.UI {
 
     public interface ICoordinatePointProducer {
         event EventHandler<InsertPointEventArgs>? InsertPointRequested;
+        bool IsInsertPointEnabled { get; set; }
     }
 }

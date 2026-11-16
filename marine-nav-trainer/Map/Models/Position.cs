@@ -1,4 +1,5 @@
 ﻿using marine_nav_trainer.Map.UI.Controls;
+using System.Windows.Media;
 
 namespace marine_nav_trainer.Map.Models {
     internal class Position {
@@ -13,5 +14,6 @@ namespace marine_nav_trainer.Map.Models {
         public double? Log { get; set; }
         public PositionMark? Mark { get; set; }
         public PositionLeader? Leader { get; set; }
+        public Brush Color { get; set; } = Brushes.Blue;
     }
 }

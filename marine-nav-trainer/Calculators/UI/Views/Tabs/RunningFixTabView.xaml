@@ -109,7 +109,7 @@
                     </StackPanel>
                 </Grid>
 
-                <ui:Button Content="Wstaw punkt" Appearance="Primary" Click="WstawPunkt_Click"
+                <ui:Button x:Name="InsertPointButton" Content="Wstaw punkt" Appearance="Primary" Click="WstawPunkt_Click"
                        HorizontalAlignment="Right" Margin="0,12,0,0"/>
             </StackPanel>
         </ScrollViewer>

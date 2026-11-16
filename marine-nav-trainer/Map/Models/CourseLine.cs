@@ -1,9 +1,11 @@
 ﻿using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Shapes;
 
 namespace marine_nav_trainer.Map.Models {
     internal class CourseLine {
         public int Id { get; set; }
+        public string? Label { get; set; }
         public required Position StartPosition { get; set; }
         public Position? EndPosition { get; set; }
         public double StartX { get; set; }
@@ -19,5 +21,6 @@ namespace marine_nav_trainer.Map.Models {
         public Line? Line { get; set; }
         public TextBlock? CourseOverGroundLabel { get; set; }
         public TextBlock? CourseCompasLabel { get; set; }
+        public Brush Color { get; set; } = Brushes.Blue;
     }
 }

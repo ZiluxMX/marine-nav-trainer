@@ -10,6 +10,11 @@ namespace marine_nav_trainer.Calculators.UI.Views.Tabs {
 
         public event EventHandler<InsertPointEventArgs>? InsertPointRequested;
 
+        public bool IsInsertPointEnabled {
+            get { return InsertPointButton.IsEnabled; }
+            set { InsertPointButton.IsEnabled = value; }
+        }
+
         public CrossbarTabView() {
             InitializeComponent();
 

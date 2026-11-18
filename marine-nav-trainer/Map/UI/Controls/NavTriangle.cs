@@ -9,6 +9,8 @@ using Point = System.Windows.Point;
 namespace marine_nav_trainer.Map.UI.Controls {
     internal class NavTriangle : Canvas {
         public const double PointSnapRadius = 20;
+        public const double DecimalCorection = 3.0;
+        public const double CollisionPressDistance = 30;
         public double AngleMain { get; private set; }
         public double AngleRed { get; private set; }
         public event EventHandler? AnglesChanged;
@@ -466,6 +468,9 @@ namespace marine_nav_trainer.Map.UI.Controls {
                 return;
             }
 
+            // Kolizja + mocny nacisk -> przyrównanie do drugiego trójkąta
+            if (TryAutoRotateOnCollision(targetLeft, targetTop)) return;
+
             // Przyklejony do punktu i kolizja -> nie ślizgamy
             if (snapped) return;
 
@@ -556,5 +561,83 @@ namespace marine_nav_trainer.Map.UI.Controls {
             (sender as UIElement)?.ReleaseMouseCapture();
             Mouse.OverrideCursor = null;
         }
+
+        // Auto rotacja na kolizji
+        private bool TryAutoRotateOnCollision(double targetLeft, double targetTop) {
+            var parent = Parent as Canvas;
+            if (parent == null) return false;
+
+            double left = Canvas.GetLeft(this);
+            double top = Canvas.GetTop(this);
+            double angle = _rotateTransform.Angle;
+
+            // Nacisk = odległość między chwytem kursora a pozycją trójkąta
+            var press = new Vector(targetLeft - left, targetTop - top);
+            if (press.Length < CollisionPressDistance) return false;
+
+            Point[] mine = GetTriangleWorldPoints(targetLeft, targetTop, angle);
+            double correction = 0;
+            bool found = false;
+
+            foreach (var child in parent.Children) {
+                if (child is NavTriangle other &&
+                    !ReferenceEquals(other, this) &&
+                    other.Visibility == Visibility.Visible) {
+                    Point[] others = other.GetTriangleWorldPoints();
+                    if (TrianglesOverlap(mine, others) && TryGetParallelCorrection(mine, others, out correction)) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) return false;
+
+            double newAngle = angle + correction;
+
+            // Po obrocie zwolnienie z kolizji - jak się nie da -> brak rotacji
+            if (CollidesWithSiblings(left, top, newAngle) && !TrySlideAlongSiblings(ref left, ref top, newAngle))
+                return false;
+
+            Canvas.SetLeft(this, left);
+            Canvas.SetTop(this, top);
+
+            AngleMain = (newAngle + 135 + 360) % 360;
+            AngleRed = (AngleMain + 180) % 360;
+
+            _rotateTransform.Angle = newAngle;
+            AnglesChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        // Szuka pary prawie równoległych krawędzi i zwraca kąt korekty (co 0.5)
+        private static bool TryGetParallelCorrection(Point[] mine, Point[] other, out double correction) {
+            double edgesAngleDiff;
+            correction = 0;
+            for (int i = 0; i < mine.Length; i++) {
+                double angleA = EdgeAngle(mine[i], mine[(i + 1) % mine.Length]);
+
+                for (int j = 0; j < other.Length; j++) {
+                    double angleB = EdgeAngle(other[j], other[(j + 1) % other.Length]);
+
+                    edgesAngleDiff = (angleB - angleA) % 180;
+                    if (edgesAngleDiff > 90) {
+                        edgesAngleDiff -= 180;
+                    }
+                    else if (edgesAngleDiff <= -90) {
+                        edgesAngleDiff += 180;
+                    }
+                    double diff = Math.Round(edgesAngleDiff * 2) / 2;  // round do 0.5
+
+                    if (diff != 0 && Math.Abs(diff) <= DecimalCorection) {
+                        correction = diff;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static double EdgeAngle(Point p1, Point p2)
+            => Math.Atan2(p2.Y - p1.Y, p2.X - p1.X) * 180 / Math.PI;
     }
 }

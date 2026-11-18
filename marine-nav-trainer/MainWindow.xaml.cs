@@ -37,6 +37,12 @@ namespace marine_nav_trainer {
                     case "showControlsHelp":
                         HelpControlsWindow.ShowSingle(this);
                         break;
+                    case "showTutorial":
+                        TutorialHelpView.ShowSingle(this);
+                        break;
+                    case "showContact":
+                        ContactAndSupportView.ShowSingle(this);
+                        break;
                     case "showAbout":
                         AboutWindow.ShowSingle(this);
                         break;

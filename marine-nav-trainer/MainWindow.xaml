@@ -46,8 +46,10 @@
 
                     <ui:NavigationViewItem Content="Pomoc">
                         <ui:NavigationViewItem.MenuItems>
-                            <ui:NavigationViewItem Content="O programie" Tag="showAbout" PreviewMouseLeftButtonUp="NavItemOnClick" MinWidth="130"/>
+                            <ui:NavigationViewItem Content="Poradnik" Tag="showTutorial" PreviewMouseLeftButtonUp="NavItemOnClick" MinWidth="150"/>
                             <ui:NavigationViewItem Content="Sterowanie" Tag="showControlsHelp" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+                            <ui:NavigationViewItem Content="Kontakt i wsparcie" Tag="showContact" PreviewMouseLeftButtonUp="NavItemOnClick"/>
+                            <ui:NavigationViewItem Content="O programie" Tag="showAbout" PreviewMouseLeftButtonUp="NavItemOnClick"/>
                         </ui:NavigationViewItem.MenuItems>
                     </ui:NavigationViewItem>
                 </ui:NavigationView.MenuItems>
